@@ -1,0 +1,545 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model bitacora_colonias {
+  gid                Int                      @default(autoincrement())
+  nombre             String?                  @db.VarChar(150)
+  geom               Unsupported("geometry")?
+  fecha_modificacion DateTime?                @db.Timestamp(6)
+  gid_origen         Int?
+  usuario            String?                  @db.VarChar(20)
+  accion_tab         String?                  @db.VarChar(15)
+
+  @@ignore
+}
+
+model bitacora_ot_archivos_planos_certificados_mesa {
+  gid                Int                      @id @default(autoincrement())
+  gid_origen         Float?
+  distrito           Float?
+  nombre             String?                  @db.VarChar(100)
+  dependencia        String?                  @db.VarChar(50)
+  expediente         String?                  @db.VarChar(20)
+  antecedentes       String?                  @db.VarChar(250)
+  accion             String?                  @db.VarChar(15)
+  usuario            String?                  @db.VarChar(50)
+  url_plano          String?                  @db.VarChar(254)
+  vobo_mesa          Int?                     @db.SmallInt
+  observaciones_mesa String?                  @db.VarChar(250)
+  fecha_edicion_mesa DateTime?                @db.Date
+  geom               Unsupported("geometry")?
+
+  @@index([geom], type: Gist)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model bitacora_ot_archivos_planos_certificados_mesa_calles {
+  gid                Int                      @id @default(autoincrement())
+  geom               Unsupported("geometry")?
+  gid_origen         Float?
+  distrito           Float?
+  nombre             String?                  @db.VarChar(100)
+  dependencia        String?                  @db.VarChar(50)
+  expediente         String?                  @db.VarChar(20)
+  antecedentes       String?                  @db.VarChar(250)
+  accion             String?                  @db.VarChar(15)
+  usuario            String?                  @db.VarChar(50)
+  url_plano          String?                  @db.VarChar(254)
+  vobo_mesa          Int?                     @db.SmallInt
+  observaciones_mesa String?                  @db.VarChar(250)
+  fecha_edicion_mesa DateTime?                @db.Date
+
+  @@index([geom], map: "sidx_bitacora_ot_archivos_planos_certificados_mesa_calles_geom", type: Gist)
+}
+
+model colonias_ciudapp {
+  gid           Int                      @id @default(autoincrement())
+  nombre        String?                  @db.VarChar(250)
+  fecha_entrega DateTime?                @db.Date
+  fuente        String?                  @db.VarChar(50)
+  geom          Unsupported("geometry")?
+
+  @@index([geom], type: Gist)
+}
+
+model colonias_muestra_puntos {
+  gid  Int                      @id @default(autoincrement())
+  id   Decimal?                 @db.Decimal(10, 0)
+  geom Unsupported("geometry")?
+
+  @@index([geom], type: Gist)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model distritos_urbanos_2018 {
+  gid        Int                      @id @default(autoincrement())
+  geom       Unsupported("geometry")?
+  distrito   Float?
+  nombre_dis String?                  @db.VarChar(254)
+  area_m2    Float?
+
+  @@index([geom], map: "sidx_distritos_urbanos_2018_geom", type: Gist)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ot_achivos_planos_certificados {
+  gid                Int                      @id @default(autoincrement())
+  distrito           Int?
+  nombre             String?                  @db.VarChar(100)
+  dep                String?                  @db.VarChar(50)
+  exp                String?                  @db.VarChar(20)
+  ref                String?                  @db.VarChar(250)
+  revision           DateTime?                @db.Date
+  obs                String?                  @db.VarChar(250)
+  id                 String?                  @db.VarChar(6)
+  fecha              String?                  @db.VarChar(50)
+  geom               Unsupported("geometry")?
+  id_geoma           Int?
+  fecha_modificacion DateTime?                @db.Timestamp(6)
+  accion_tab         String?                  @db.VarChar(15)
+  usuario            String?                  @db.VarChar(50)
+  url                String?                  @db.VarChar(255)
+  certificado        String?                  @db.VarChar(4)
+  list_exp           String?                  @db.VarChar(2)
+  revision_interna   Boolean?
+  vobo_mesa          Boolean?
+  obs_mesa           String?                  @db.VarChar(250)
+  fecha_mesa         DateTime?                @db.Date
+  gid_origen         Float?
+
+  @@index([geom], type: Gist)
+}
+
+model ot_archivos_planos_certificados_mesa {
+  gid                Int                      @id @default(autoincrement())
+  gid_origen         Float?
+  distrito           Float?
+  nombre             String?                  @db.VarChar(100)
+  dependencia        String?                  @db.VarChar(50)
+  expediente         String?                  @db.VarChar(20)
+  antecedentes       String?                  @db.VarChar(250)
+  accion             String?                  @db.VarChar(15)
+  usuario            String?                  @db.VarChar(50)
+  url_plano          String?                  @db.VarChar(254)
+  vobo_mesa          Int?                     @db.SmallInt
+  observaciones_mesa String?                  @db.VarChar(250)
+  fecha_edicion_mesa DateTime?                @db.Date
+  geom               Unsupported("geometry")?
+
+  @@index([geom], type: Gist)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ot_archivos_planos_certificados_mesa_calles {
+  gid                Int                      @id @default(autoincrement())
+  geom               Unsupported("geometry")?
+  tipo               String?                  @db.VarChar(50)
+  nombre             String?                  @db.VarChar(100)
+  orientacion        String?                  @db.VarChar(20)
+  colonia            String?                  @db.VarChar(200)
+  distrito           Float?
+  dependencia        String?                  @db.VarChar(50)
+  expediente         String?                  @db.VarChar(20)
+  antecedentes       String?                  @db.VarChar(250)
+  accion             String?                  @db.VarChar(15)
+  usuario            String?                  @db.VarChar(50)
+  url_plano          String?                  @db.VarChar(254)
+  vobo_mesa          Int?                     @db.SmallInt
+  observaciones_mesa String?                  @db.VarChar(250)
+  fecha_edicion_mesa DateTime?                @db.Date
+  gid_origen         Float?
+
+  @@index([geom], map: "sidx_ot_archivos_planos_certificados_mesa_calles_geom", type: Gist)
+}
+
+model ot_area_estudio {
+  gid           Int        @id @default(autoincrement())        // gid de Prisma y BD
+  gidSecundario Decimal?   @map("_gid") @db.Decimal(10, 0)      // _gid en BD, con nombre distinto en Prisma
+  id            Decimal?   @db.Decimal(10, 0)
+  a_estudio     String?    @db.VarChar(10)
+  distrito      Decimal?   @db.Decimal(10, 0)
+  geom          Unsupported("geometry")?
+
+  @@index([geom], type: Gist)
+}
+
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ot_areas_naturales_protegidas {
+  gid        Int                      @id @default(autoincrement())
+  nombre     String?                  @db.VarChar(254)
+  area       Decimal?                 @db.Decimal
+  hectareas  Decimal?                 @db.Decimal
+  perimetro  Decimal?                 @db.Decimal
+  declarator String?                  @db.VarChar(200)
+  geom       Unsupported("geometry")?
+
+  @@index([geom], type: Gist)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ot_calles_colonias {
+  gid        Int                      @id @default(autoincrement())
+  nombre_car String?                  @db.VarChar(56)
+  id_calles  String?                  @db.VarChar(11)
+  nombre_sis String?                  @db.VarChar(38)
+  coinsiden1 Int?
+  calle      String?                  @db.VarChar(50)
+  shape_len  Decimal?                 @db.Decimal
+  obs        String?                  @db.VarChar(250)
+  planos     String?                  @db.VarChar(100)
+  ref        String?                  @db.VarChar(250)
+  geom       Unsupported("geometry")?
+
+  @@index([geom], type: Gist)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ot_capa_poligonos_zonas_vacias {
+  gid  BigInt                   @id @default(autoincrement())
+  geom Unsupported("geometry")?
+  obs  String?                  @db.VarChar(200)
+  dto  String?                  @db.VarChar(6)
+  zona String?                  @db.VarChar(14)
+
+  @@index([geom], map: "sidx_ot_capa_poligonos_zonas_vacias_geom", type: Gist)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ot_colonias {
+  gid      Int                      @id @default(autoincrement())
+  nombre   String?                  @db.VarChar(200)
+  tipo     String?                  @db.VarChar(100)
+  dist     Int?                     @db.SmallInt
+  geom     Unsupported("geometry")?
+  id_geoma Int?
+
+  @@index([geom], type: Gist)
+}
+
+model ot_colonias_final {
+  gid    BigInt                   @id
+  geom   Unsupported("geometry")?
+  nombre String?                  @db.VarChar(100)
+
+  @@index([geom], map: "sidx_ot_colonias_final_geom", type: Gist)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ot_colonias_limite_propuesto {
+  gid      Int                      @id @default(autoincrement())
+  distrito Decimal?                 @db.Decimal(10, 0)
+  nombre   String?                  @db.VarChar(100)
+  geom     Unsupported("geometry")?
+
+  @@index([geom], type: Gist)
+}
+
+model ot_emplacados_mesa {
+  gid             Int                      @id @default(autoincrement())
+  geom            Unsupported("geometry")?
+  nombre_base     String?                  @db.VarChar(150)
+  nombre_campo    String?                  @db.VarChar(150)
+  nombre_colonia  String?                  @db.VarChar(150)
+  calle1          String?                  @db.VarChar(100)
+  calle2          String?                  @db.VarChar(100)
+  coinside        Boolean?
+  distrito_urbano Int?
+  observaciones   String?                  @db.VarChar(254)
+
+  @@index([geom], map: "sidx_ot_emplacados_mesa_geom", type: Gist)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ot_licencia_urbanizacion_2001_2021_ {
+  gid        Int                      @id @default(autoincrement())
+  geom       Unsupported("geometry")?
+  id         Int?
+  nombre_des String?                  @map("nombre des") @db.VarChar(70)
+  clave_aut  String?                  @map("clave aut") @db.VarChar(30)
+  facha_aut  String?                  @map("facha aut") @db.VarChar(10)
+  superficie String?                  @db.VarChar(15)
+  obs        String?                  @db.VarChar(200)
+  a_o        BigInt?                  @map("año")
+  distrito   String?                  @db.VarChar(6)
+  reg        BigInt?
+  estatus    String?                  @db.VarChar(254)
+  potmet     String?                  @db.VarChar(50)
+  ide        String?                  @db.VarChar(20)
+  idd        String?                  @db.VarChar(50)
+  uso        String?                  @db.VarChar(250)
+  sup_pol    Float?
+  recepcion  String?                  @db.VarChar(2)
+  exp_recep  Float?
+  ubicacion  String?                  @db.VarChar(254)
+  n_acta     Float?
+  f_recep    String?                  @db.VarChar(10)
+  nota       String?                  @db.VarChar(254)
+
+  @@index([geom], map: "sidx_ot_licencia_urbanizacion_2001-2021\n_geom", type: Gist)
+  @@map("ot_licencia_urbanizacion_2001-2021\n")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ot_limite_municipal_oficial2012 {
+  gid      Int                      @id @default(autoincrement())
+  nombre   String?                  @db.VarChar(254)
+  clave    Int?
+  kms2     Decimal?                 @db.Decimal
+  hectares Decimal?                 @db.Decimal
+  fuente   String?                  @db.VarChar(10)
+  geom     Unsupported("geometry")?
+  id_geoma Int?
+
+  @@index([geom], type: Gist)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ot_limites_distritos_urbanos {
+  gid      Int                      @id @default(autoincrement())
+  distrito Decimal?                 @db.Decimal
+  nombre   String?                  @db.VarChar(254)
+  area_m2  Decimal?                 @db.Decimal
+  geom     Unsupported("geometry")?
+  id_geoma Int?
+
+  @@index([geom], type: Gist)
+}
+
+model ot_mesa_calles_intersecciones {
+  gid        Int                      @id @default(autoincrement())
+  geom       Unsupported("geometry")?
+  tipo       String?                  @db.VarChar(50)
+  nombre     String?                  @db.VarChar(100)
+  orientacio String?                  @db.VarChar(20)
+  colonia    String?                  @db.VarChar(200)
+  distrito   Decimal?                 @db.Decimal
+  dependenci String?                  @db.VarChar(50)
+  expediente String?                  @db.VarChar(20)
+  antecedent String?                  @db.VarChar(250)
+  accion     String?                  @db.VarChar(15)
+  usuario    String?                  @db.VarChar(50)
+  url_plano  String?                  @db.VarChar(254)
+  vobo_mesa  BigInt?
+  observacio String?                  @db.VarChar(250)
+  fecha_edic DateTime?                @db.Date
+  gid_origen Decimal?                 @db.Decimal
+  num_verice BigInt?
+  gid_2      BigInt?
+  tipo_2     String?                  @db.VarChar(50)
+  nombre_2   String?                  @db.VarChar(100)
+  orientac_1 String?                  @db.VarChar(20)
+  colonia_2  String?                  @db.VarChar(200)
+  distrito_2 Decimal?                 @db.Decimal
+  dependen_1 String?                  @db.VarChar(50)
+  expedien_1 String?                  @db.VarChar(20)
+  antecede_1 String?                  @db.VarChar(250)
+  accion_2   String?                  @db.VarChar(15)
+  usuario_2  String?                  @db.VarChar(50)
+  url_plano_ String?                  @db.VarChar(254)
+  vobo_mesa_ BigInt?
+  observac_1 String?                  @db.VarChar(250)
+  fecha_ed_1 DateTime?                @db.Date
+  gid_orig_1 Decimal?                 @db.Decimal
+  num_veri_1 BigInt?
+  intersecci String?                  @db.VarChar(254)
+  intersec_1 String?                  @db.VarChar(254)
+  intersec_2 String?                  @db.VarChar(254)
+  gid_export BigInt?
+
+  @@index([geom], map: "sidx_ot_mesa_calles_intersecciones_geom", type: Gist)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ot_nombre_de_vialidades {
+  gid           Int                      @id @default(autoincrement())
+  geom          Unsupported("geometry")?
+  fid           BigInt?
+  nombre        String?                  @db.VarChar(100)
+  colonia       String?                  @db.VarChar(100)
+  distrito      String?                  @db.VarChar(2)
+  observaciones String?                  @db.VarChar(250)
+
+  @@index([geom], map: "sidx_ot_nombre_de_vialidades_geom", type: Gist)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ot_oficios_colonias_solicitadas_ {
+  gid        Int                      @id @default(autoincrement())
+  geom       Unsupported("geometry")?
+  colonia_   String?                  @map("colonia ") @db.VarChar(100)
+  obs        String?                  @db.VarChar(200)
+  oficio_pri String?                  @db.VarChar(27)
+  oficio_2da String?                  @db.VarChar(27)
+  obs_1      String?                  @db.VarChar(250)
+  peticion   String?                  @db.VarChar(100)
+
+  @@index([geom], map: "sidx_ot_oficios_colonias_solicitadas\n_geom", type: Gist)
+  @@map("ot_oficios_colonias_solicitadas\n")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ot_reg_condominio {
+  gid      Int                      @id @default(autoincrement())
+  nombre   String?                  @db.VarChar(200)
+  distrito String?                  @db.VarChar(10)
+  geom     Unsupported("geometry")?
+
+  @@index([geom], type: Gist)
+}
+
+model ot_uvot_uagu_piu_lu {
+  gid        Int                      @id @default(autoincrement())
+  geom       Unsupported("geometry")?
+  id         BigInt?
+  nombre_des String?                  @db.VarChar(70)
+  clave_aut  String?                  @db.VarChar(30)
+  fecha      String?                  @db.VarChar(10)
+  superficie String?                  @db.VarChar(15)
+  obs        String?                  @db.VarChar(200)
+  anio       Decimal?                 @db.Decimal
+  distrito   String?                  @db.VarChar(6)
+  reg        Decimal?                 @db.Decimal
+  estatus    String?                  @db.VarChar(254)
+  potmet     String?                  @db.VarChar(50)
+  ide        String?                  @db.VarChar(20)
+  idd        String?                  @db.VarChar(50)
+  uso        String?                  @db.VarChar(250)
+  sup_pol    Decimal?                 @db.Decimal
+  recepcion  String?                  @db.VarChar(2)
+  exp_recep  Decimal?                 @db.Decimal
+  ubicacion  String?                  @db.VarChar(254)
+  n_acta     Decimal?                 @db.Decimal
+  f_recep    String?                  @db.VarChar(10)
+  nota       String?                  @db.VarChar(254)
+  dictamen   String?                  @db.VarChar(50)
+  empresa    String?                  @db.VarChar(58)
+  equipamien Decimal?                 @db.Decimal
+  vivienda   BigInt?
+  promotor   String?                  @db.VarChar(63)
+  propietari String?                  @db.VarChar(72)
+  sup_acd    Decimal?                 @db.Decimal
+  suspendida String?                  @db.VarChar(10)
+  nota_acd   String?                  @db.VarChar(150)
+  folio      Decimal?                 @db.Decimal
+  dr_obra    String?                  @db.VarChar(50)
+  dr_proy    String?                  @db.VarChar(50)
+  fecha_piu  DateTime?                @db.Date
+  fecha_lu   DateTime?                @db.Date
+  cve_lu     String?                  @db.VarChar(50)
+  cve_piu    String?                  @db.VarChar(50)
+  exp_unico  String?                  @db.VarChar(50)
+  ubi        String?                  @db.VarChar(254)
+
+  @@index([geom], map: "sidx_ot_uvot_uagu_piu_lu_geom", type: Gist)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ot_zpn_asentamientos_regularizados {
+  gid        Int                      @id @default(autoincrement())
+  geom       Unsupported("geometry")?
+  id         BigInt?
+  periodo    String?                  @db.VarChar(250)
+  ide        String?                  @db.VarChar(10)
+  fracc      String?                  @db.VarChar(254)
+  declarato  String?                  @db.VarChar(254)
+  lotes      String?                  @db.VarChar(254)
+  superficie String?                  @db.VarChar(254)
+  obs        String?                  @db.VarChar(250)
+  dist_urb   String?                  @db.VarChar(250)
+
+  @@index([geom], map: "sidx_ot_zpn_asentamientos_regularizados_geom", type: Gist)
+}
+
+model ot_zpn_calles {
+  gid      Int                      @id @default(autoincrement())
+  calle    String?                  @db.VarChar(50)
+  obs      String?                  @db.VarChar(250)
+  distrito Decimal?                 @db.Decimal(10, 0)
+  colonia  String?                  @db.VarChar(75)
+  geom     Unsupported("geometry")?
+
+  @@index([geom], type: Gist)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ot_zpn_delegaciones_agencias {
+  gid    Int                      @id @default(autoincrement())
+  geom   Unsupported("geometry")?
+  id     Int?
+  tipo   String?                  @db.VarChar(20)
+  nombre String?                  @db.VarChar(150)
+  supm2  Float?
+
+  @@index([geom], map: "sidx_ot_zpn_delegaciones_agencias_geom", type: Gist)
+}
+
+model ot_zpn_lic_urb_piu {
+  gid        Int                      @id @default(autoincrement())
+  geom       Unsupported("geometry")?
+  nombre_des String?                  @db.VarChar(70)
+  anio       BigInt?
+  distrito   String?                  @db.VarChar(6)
+  reg        BigInt?
+}
+
+model ot_zpn_predios {
+  gid        Int                      @id @default(autoincrement())
+  clave_cata String?                  @db.VarChar(254)
+  geom       Unsupported("geometry")?
+  uso_aut    String?                  @db.VarChar(200)
+
+  @@index([geom], type: Gist)
+}
+
+model password_resets_muc {
+  id         Int      @id @default(autoincrement())
+  correo     String
+  codigo     String   @db.VarChar(6)
+  expires_at DateTime
+  used       Boolean  @default(false)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model predios_catastro_ordenamiento_2024 {
+  gid      Int                      @id @default(autoincrement())
+  geom     Unsupported("geometry")?
+  fid      BigInt?
+  distrito Int?
+  uso      String?                  @db.VarChar(254)
+  clase    String?                  @db.VarChar(254)
+  proyecto BigInt?
+  lic_urb  String?                  @db.VarChar(50)
+  obs      String?                  @db.VarChar(254)
+
+  @@index([geom], map: "sidx_predios_catastro_ordenamiento_2024_geom", type: Gist)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model usuarios_muc {
+  gid        Int     @id @default(autoincrement())
+  nombre     String? @db.VarChar(50)
+  apellidos  String? @db.VarChar(150)
+  noempleado Int?
+  correo     String? @unique @db.VarChar(100)
+  rol        String? @db.VarChar(15)
+  password   String? @db.VarChar(20)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model zpn_manzanas {
+  gid       Int                      @id @default(autoincrement())
+  geom      Unsupported("geometry")?
+  fid       BigInt?
+  distrito_ Int?                     @map("distrito ")
+  cvegeo    String?                  @db.VarChar(16)
+
+  @@index([geom], map: "sidx_zpn_manzanas_geom", type: Gist)
+}
