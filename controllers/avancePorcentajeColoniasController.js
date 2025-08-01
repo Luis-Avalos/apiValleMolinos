@@ -22,7 +22,7 @@ conteo AS (
    distrito,
    COALESCE(vobo_mesa, -1) AS vobo_mesa,
    COUNT(*) AS total_colonias
- FROM gestion_ordenamiento_territorial.ot_archivos_planos_certificados_mesa
+ FROM gestion_ordenamiento_territorial.ot_colonias
  GROUP BY distrito, COALESCE(vobo_mesa, -1)
 )
 SELECT

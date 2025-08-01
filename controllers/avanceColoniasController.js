@@ -11,7 +11,7 @@ const obtenerAvanceColonias = async (req, res) => {
           100.0 * COUNT(*) FILTER (WHERE vobo_mesa = 1) / COUNT(*),
           2
         ) AS porcentaje_avance_total
-      FROM gestion_ordenamiento_territorial.ot_archivos_planos_certificados_mesa
+      FROM gestion_ordenamiento_territorial.ot_colonias
       WHERE distrito IN (1,2,3,4,5,6,7,8,9,10,11,12);
     `);
 

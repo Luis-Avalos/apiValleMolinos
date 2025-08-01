@@ -20,25 +20,6 @@ model bitacora_colonias {
   @@ignore
 }
 
-model bitacora_ot_archivos_planos_certificados_mesa {
-  gid                Int                      @id @default(autoincrement())
-  gid_origen         Float?
-  distrito           Float?
-  nombre             String?                  @db.VarChar(100)
-  dependencia        String?                  @db.VarChar(50)
-  expediente         String?                  @db.VarChar(20)
-  antecedentes       String?                  @db.VarChar(250)
-  accion             String?                  @db.VarChar(15)
-  usuario            String?                  @db.VarChar(50)
-  url_plano          String?                  @db.VarChar(254)
-  vobo_mesa          Int?                     @db.SmallInt
-  observaciones_mesa String?                  @db.VarChar(250)
-  fecha_edicion_mesa DateTime?                @db.Date
-  geom               Unsupported("geometry")?
-
-  @@index([geom], type: Gist)
-}
-
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model bitacora_ot_archivos_planos_certificados_mesa_calles {
   gid                Int                      @id @default(autoincrement())
@@ -117,25 +98,6 @@ model ot_achivos_planos_certificados {
   @@index([geom], type: Gist)
 }
 
-model ot_archivos_planos_certificados_mesa {
-  gid                Int                      @id @default(autoincrement())
-  gid_origen         Float?
-  distrito           Float?
-  nombre             String?                  @db.VarChar(100)
-  dependencia        String?                  @db.VarChar(50)
-  expediente         String?                  @db.VarChar(20)
-  antecedentes       String?                  @db.VarChar(250)
-  accion             String?                  @db.VarChar(15)
-  usuario            String?                  @db.VarChar(50)
-  url_plano          String?                  @db.VarChar(254)
-  vobo_mesa          Int?                     @db.SmallInt
-  observaciones_mesa String?                  @db.VarChar(250)
-  fecha_edicion_mesa DateTime?                @db.Date
-  geom               Unsupported("geometry")?
-
-  @@index([geom], type: Gist)
-}
-
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model ot_archivos_planos_certificados_mesa_calles {
   gid                Int                      @id @default(autoincrement())
@@ -160,16 +122,15 @@ model ot_archivos_planos_certificados_mesa_calles {
 }
 
 model ot_area_estudio {
-  gid           Int        @id @default(autoincrement())        // gid de Prisma y BD
-  gidSecundario Decimal?   @map("_gid") @db.Decimal(10, 0)      // _gid en BD, con nombre distinto en Prisma
-  id            Decimal?   @db.Decimal(10, 0)
-  a_estudio     String?    @db.VarChar(10)
-  distrito      Decimal?   @db.Decimal(10, 0)
-  geom          Unsupported("geometry")?
+  gid       Int                      @id @default(autoincrement())
+  gidSecundario       Decimal?                 @map("__gid") @db.Decimal(10, 0)
+  id        Decimal?                 @db.Decimal(10, 0)
+  a_estudio String?                  @db.VarChar(10)
+  distrito  Decimal?                 @db.Decimal(10, 0)
+  geom      Unsupported("geometry")?
 
   @@index([geom], type: Gist)
 }
-
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model ot_areas_naturales_protegidas {
@@ -214,32 +175,22 @@ model ot_capa_poligonos_zonas_vacias {
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model ot_colonias {
-  gid      Int                      @id @default(autoincrement())
-  nombre   String?                  @db.VarChar(200)
-  tipo     String?                  @db.VarChar(100)
-  dist     Int?                     @db.SmallInt
-  geom     Unsupported("geometry")?
-  id_geoma Int?
+  gid                Int                      @id(map: "ot_archivos_planos_certificados_mesa_pkey") @default(autoincrement())
+  gid_origen         Float?
+  distrito           Float?
+  nombre             String?                  @db.VarChar(100)
+  dependencia        String?                  @db.VarChar(50)
+  expediente         String?                  @db.VarChar(20)
+  antecedentes       String?                  @db.VarChar(250)
+  accion             String?                  @db.VarChar(15)
+  usuario            String?                  @db.VarChar(50)
+  url_plano          String?                  @db.VarChar(254)
+  vobo_mesa          Int?                     @db.SmallInt
+  observaciones_mesa String?                  @db.VarChar(250)
+  fecha_edicion_mesa DateTime?                @db.Date
+  geom               Unsupported("geometry")?
 
-  @@index([geom], type: Gist)
-}
-
-model ot_colonias_final {
-  gid    BigInt                   @id
-  geom   Unsupported("geometry")?
-  nombre String?                  @db.VarChar(100)
-
-  @@index([geom], map: "sidx_ot_colonias_final_geom", type: Gist)
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model ot_colonias_limite_propuesto {
-  gid      Int                      @id @default(autoincrement())
-  distrito Decimal?                 @db.Decimal(10, 0)
-  nombre   String?                  @db.VarChar(100)
-  geom     Unsupported("geometry")?
-
-  @@index([geom], type: Gist)
+  @@index([geom], map: "ot_archivos_planos_certificados_mesa_geom_idx", type: Gist)
 }
 
 model ot_emplacados_mesa {
@@ -255,36 +206,6 @@ model ot_emplacados_mesa {
   observaciones   String?                  @db.VarChar(254)
 
   @@index([geom], map: "sidx_ot_emplacados_mesa_geom", type: Gist)
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model ot_licencia_urbanizacion_2001_2021_ {
-  gid        Int                      @id @default(autoincrement())
-  geom       Unsupported("geometry")?
-  id         Int?
-  nombre_des String?                  @map("nombre des") @db.VarChar(70)
-  clave_aut  String?                  @map("clave aut") @db.VarChar(30)
-  facha_aut  String?                  @map("facha aut") @db.VarChar(10)
-  superficie String?                  @db.VarChar(15)
-  obs        String?                  @db.VarChar(200)
-  a_o        BigInt?                  @map("año")
-  distrito   String?                  @db.VarChar(6)
-  reg        BigInt?
-  estatus    String?                  @db.VarChar(254)
-  potmet     String?                  @db.VarChar(50)
-  ide        String?                  @db.VarChar(20)
-  idd        String?                  @db.VarChar(50)
-  uso        String?                  @db.VarChar(250)
-  sup_pol    Float?
-  recepcion  String?                  @db.VarChar(2)
-  exp_recep  Float?
-  ubicacion  String?                  @db.VarChar(254)
-  n_acta     Float?
-  f_recep    String?                  @db.VarChar(10)
-  nota       String?                  @db.VarChar(254)
-
-  @@index([geom], map: "sidx_ot_licencia_urbanizacion_2001-2021\n_geom", type: Gist)
-  @@map("ot_licencia_urbanizacion_2001-2021\n")
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -355,19 +276,6 @@ model ot_mesa_calles_intersecciones {
   gid_export BigInt?
 
   @@index([geom], map: "sidx_ot_mesa_calles_intersecciones_geom", type: Gist)
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model ot_nombre_de_vialidades {
-  gid           Int                      @id @default(autoincrement())
-  geom          Unsupported("geometry")?
-  fid           BigInt?
-  nombre        String?                  @db.VarChar(100)
-  colonia       String?                  @db.VarChar(100)
-  distrito      String?                  @db.VarChar(2)
-  observaciones String?                  @db.VarChar(250)
-
-  @@index([geom], map: "sidx_ot_nombre_de_vialidades_geom", type: Gist)
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -490,21 +398,12 @@ model ot_zpn_lic_urb_piu {
   reg        BigInt?
 }
 
-model ot_zpn_predios {
-  gid        Int                      @id @default(autoincrement())
-  clave_cata String?                  @db.VarChar(254)
-  geom       Unsupported("geometry")?
-  uso_aut    String?                  @db.VarChar(200)
-
-  @@index([geom], type: Gist)
-}
-
 model password_resets_muc {
   id         Int      @id @default(autoincrement())
-  correo     String
+  correo     String   @db.VarChar(255)
   codigo     String   @db.VarChar(6)
-  expires_at DateTime
-  used       Boolean  @default(false)
+  expires_at DateTime @db.Timestamp(6)
+  used       Boolean? @default(false)
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -524,13 +423,15 @@ model predios_catastro_ordenamiento_2024 {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model usuarios_muc {
-  gid        Int     @id @default(autoincrement())
+  gid        Int     @default(autoincrement())
   nombre     String? @db.VarChar(50)
   apellidos  String? @db.VarChar(150)
   noempleado Int?
-  correo     String? @unique @db.VarChar(100)
+  correo     String? @db.VarChar(100)
   rol        String? @db.VarChar(15)
-  password   String? @db.VarChar(20)
+  password   String? @db.VarChar(255)
+
+  @@ignore
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -542,4 +443,35 @@ model zpn_manzanas {
   cvegeo    String?                  @db.VarChar(16)
 
   @@index([geom], map: "sidx_zpn_manzanas_geom", type: Gist)
+}
+
+model bitacora_ot_colonias {
+  gid                Int                      @id(map: "bitacora_ot_archivos_planos_certificados_mesa_pkey") @default(autoincrement())
+  gid_origen         Float?
+  distrito           Float?
+  nombre             String?                  @db.VarChar(100)
+  dependencia        String?                  @db.VarChar(50)
+  expediente         String?                  @db.VarChar(20)
+  antecedentes       String?                  @db.VarChar(250)
+  accion             String?                  @db.VarChar(15)
+  usuario            String?                  @db.VarChar(50)
+  url_plano          String?                  @db.VarChar(254)
+  vobo_mesa          Int?                     @db.SmallInt
+  observaciones_mesa String?                  @db.VarChar(250)
+  fecha_edicion_mesa DateTime?                @db.Date
+  geom               Unsupported("geometry")?
+
+  @@index([geom], map: "bitacora_ot_archivos_planos_certificados_mesa_geom_idx", type: Gist)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ot_colonias_2015 {
+  gid      Int                      @id(map: "ot_colonias_pkey") @default(autoincrement())
+  nombre   String?                  @db.VarChar(200)
+  tipo     String?                  @db.VarChar(100)
+  dist     Int?                     @db.SmallInt
+  geom     Unsupported("geometry")?
+  id_geoma Int?
+
+  @@index([geom], map: "ot_colonias_geom_idx", type: Gist)
 }

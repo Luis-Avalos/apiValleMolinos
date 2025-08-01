@@ -13,7 +13,7 @@ const obtenerVoboMesaDistrito = async (req, res) => {
     WHEN vobo_mesa = -1 THEN 'Sin revisar'
   END AS estado,
   COUNT(*) AS total_colonias
-FROM gestion_ordenamiento_territorial.ot_archivos_planos_certificados_mesa where distrito in (1,2,3,4,5,6,7,8,9,10,11,12)
+FROM gestion_ordenamiento_territorial.ot_colonias where distrito in (1,2,3,4,5,6,7,8,9,10,11,12)
 GROUP BY distrito, vobo_mesa,estado
 ORDER BY distrito, vobo_mesa, estado;
             `);

@@ -23,7 +23,7 @@ exports.requestReset = async (req, res) => {
   const codigo = generateCode();
   const expires = new Date(Date.now() + 1000 * 60 * 10); // 10 minutos
 
-  await prisma.password_resets.create({
+  await prisma.password_resets_muc.create({
     data: {
       correo,
       codigo,
