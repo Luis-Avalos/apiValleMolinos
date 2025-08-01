@@ -39,7 +39,7 @@ exports.requestReset = async (req, res) => {
 exports.verifyCode = async (req, res) => {
   const { correo, codigo } = req.body;
 
-  const record = await prisma.password_resets.findFirst({
+  const record = await prisma.password_resets_muc.findFirst({
     where: {
       correo,
       codigo,
@@ -57,7 +57,7 @@ exports.verifyCode = async (req, res) => {
 exports.resetPassword = async (req, res) => {
   const { correo, codigo, nuevaPassword } = req.body;
 
-  const record = await prisma.password_resets.findFirst({
+  const record = await prisma.password_resets_muc.findFirst({
     where: {
       correo,
       codigo,
@@ -75,7 +75,7 @@ exports.resetPassword = async (req, res) => {
     data: { password: hashed },
   });
 
-  await prisma.password_resets.update({
+  await prisma.password_resets_muc.update({
     where: { id: record.id },
     data: { used: true },
   });
