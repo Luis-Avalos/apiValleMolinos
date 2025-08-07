@@ -25,9 +25,12 @@ app.use('/api', voboMesaRoute);
 const voboMesaDistritoRoute = require('./routes/voboMesaDistritoRoute');
 app.use('/api', voboMesaDistritoRoute);
 
-
 const avancePorcentajeColoniasRoute = require('./routes/avancePorcentajeColoniasRoute');
 app.use('/api', avancePorcentajeColoniasRoute);
+
+const coloniasRoutes = require('./routes/coloniasRoutes');
+app.use('/api/colonias', coloniasRoutes);
+
 
 const PORT = process.env.PORT || 3003;
 app.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`));

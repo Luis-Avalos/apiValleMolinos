@@ -122,12 +122,12 @@ model ot_archivos_planos_certificados_mesa_calles {
 }
 
 model ot_area_estudio {
-  gid       Int                      @id @default(autoincrement())
-  gidSecundario       Decimal?                 @map("__gid") @db.Decimal(10, 0)
-  id        Decimal?                 @db.Decimal(10, 0)
-  a_estudio String?                  @db.VarChar(10)
-  distrito  Decimal?                 @db.Decimal(10, 0)
-  geom      Unsupported("geometry")?
+  gid           Int                      @id @default(autoincrement())
+  gidSecundario Decimal?                 @map("__gid") @db.Decimal(10, 0)
+  id            Decimal?                 @db.Decimal(10, 0)
+  a_estudio     String?                  @db.VarChar(10)
+  distrito      Decimal?                 @db.Decimal(10, 0)
+  geom          Unsupported("geometry")?
 
   @@index([geom], type: Gist)
 }
@@ -474,4 +474,23 @@ model ot_colonias_2015 {
   id_geoma Int?
 
   @@index([geom], map: "ot_colonias_geom_idx", type: Gist)
+}
+
+model ot_colonias_edit {
+  gid                Int                      @id
+  geom               Unsupported("geometry")?
+  gid_origen         Float?
+  distrito           Float?
+  nombre             String?                  @db.VarChar(100)
+  dependencia        String?                  @db.VarChar(50)
+  expediente         String?                  @db.VarChar(20)
+  antecedentes       String?                  @db.VarChar(250)
+  accion             String?                  @db.VarChar(15)
+  usuario            String?                  @db.VarChar(50)
+  url_plano          String?                  @db.VarChar(254)
+  vobo_mesa          Int?
+  observaciones_mesa String?                  @db.VarChar(250)
+  fecha_edicion_mesa DateTime?                @db.Date
+
+  @@index([geom], map: "sidx_ot_colonias_edit_geom", type: Gist)
 }
