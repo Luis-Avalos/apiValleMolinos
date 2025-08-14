@@ -31,6 +31,15 @@ app.use('/api', avancePorcentajeColoniasRoute);
 const coloniasRoutes = require('./routes/coloniasRoutes');
 app.use('/api/colonias', coloniasRoutes);
 
+const getAllColoniasWithGeom = require('./routes/updateColoniasRoutes');
+app.use('/api/colonias', getAllColoniasWithGeom);
+
+const insertColoniasRoutes = require("./routes/insertColoniasRoutes");
+app.use("/api/colonias", insertColoniasRoutes);
+
+const getUsuariosChart = require("./routes/usuariosChartsRoutes");
+app.use("/api/usuarios", getUsuariosChart);
+
 
 const PORT = process.env.PORT || 3003;
 app.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`));
