@@ -13,6 +13,7 @@ exports.updateColonia = async (req, res) => {
     vobomesa,
     observaciones,
     correo,
+    accion,
     ultima_edicion,
   } = req.body;
 
@@ -33,6 +34,7 @@ exports.updateColonia = async (req, res) => {
         vobo_mesa: vobomesa ? parseInt(vobomesa) : null,
         observaciones_mesa: observaciones || null,
         usuario: correo || null,
+        accion: accion || null,
         fecha_edicion_mesa: ultima_edicion ? new Date(ultima_edicion) : null,
       },
     });
@@ -57,7 +59,9 @@ exports.deleteColoniaPost = async (req, res) => {
 
   try {
     await prisma.ot_colonias_edit.delete({
+
       where: { gid }
+     
     });
 
     res.json({
