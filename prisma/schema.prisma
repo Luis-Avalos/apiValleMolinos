@@ -17,6 +17,7 @@ model conductores {
   curp            String?    @unique @db.VarChar(18)
   foto_perfil_url String?
   fecha_registro  DateTime?  @default(now()) @db.Timestamp(6)
+  rol             String?    @db.VarChar
   unidades        unidades[]
 }
 
@@ -73,6 +74,7 @@ model usuarios_ciudadanos {
   password_hash   String
   foto_perfil_url String?
   fecha_registro  DateTime?        @default(now()) @db.Timestamp(6)
+  rol             String?          @db.VarChar
   notificaciones  notificaciones[]
 }
 

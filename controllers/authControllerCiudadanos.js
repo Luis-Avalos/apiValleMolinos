@@ -39,7 +39,8 @@ exports.loginCiudadanos = async (req, res) => {
       email: user.email,
       telefono: user.telefono,
       foto_perfil_url: user.foto_perfil_url,
-      fecha_registro: user.fecha_registro
+      fecha_registro: user.fecha_registro,
+      rol: user.rol
     });
 
   } catch (error) {

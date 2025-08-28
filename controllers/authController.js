@@ -38,6 +38,7 @@ exports.login = async (req, res) => {
       email: user.email,
       telefono: user.telefono,
       curp: user.curp,
+      rol: user.rol,
       foto_perfil_url: user.foto_perfil_url,
       fecha_registro: user.fecha_registro
     });
