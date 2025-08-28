@@ -15,33 +15,33 @@ function generateCode(length = 6) {
 
 //Solicitar recuperación
 exports.requestReset = async (req, res) => {
-  const { correo } = req.body;
+  const { email } = req.body;
 
-  const user = await prisma.usuarios_muc.findUnique({ where: { correo } });
+  const user = await prisma.conductores.findUnique({ where: { email } });
   if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
   const codigo = generateCode();
   const expires = new Date(Date.now() + 1000 * 60 * 10); // 10 minutos
 
-  await prisma.password_resets_muc.create({
+  await prisma.password_resets_conductores.create({
     data: {
-      correo,
+      email,
       codigo,
       expires_at: expires,
     },
   });
 
-  await sendResetCode(correo, codigo);
-  res.json({ message: 'Código enviado al correo' });
+  await sendResetCode(email, codigo);
+  res.json({ message: 'Código enviado al email' });
 };
 
 // Verificar código
 exports.verifyCode = async (req, res) => {
-  const { correo, codigo } = req.body;
+  const { email, codigo } = req.body;
 
-  const record = await prisma.password_resets_muc.findFirst({
+  const record = await prisma.password_resets_conductores.findFirst({
     where: {
-      correo,
+      email,
       codigo,
       used: false,
       expires_at: { gt: new Date() },
@@ -55,11 +55,11 @@ exports.verifyCode = async (req, res) => {
 
 // Cambiar contraseña
 exports.resetPassword = async (req, res) => {
-  const { correo, codigo, nuevaPassword } = req.body;
+  const { email, codigo, nuevaPassword } = req.body;
 
-  const record = await prisma.password_resets_muc.findFirst({
+  const record = await prisma.password_resets_conductores.findFirst({
     where: {
-      correo,
+      email,
       codigo,
       used: false,
       expires_at: { gt: new Date() },
@@ -70,12 +70,12 @@ exports.resetPassword = async (req, res) => {
 
   const hashed = await bcrypt.hash(nuevaPassword, 10);
 
-  await prisma.usuarios_muc.update({
-    where: { correo },
-    data: { password: hashed },
+  await prisma.conductores.update({
+    where: { email },
+    data: { password_hash: hashed },
   });
 
-  await prisma.password_resets_muc.update({
+  await prisma.password_resets_conductores.update({
     where: { id: record.id },
     data: { used: true },
   });

@@ -7,39 +7,47 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const userRoutes = require('./routes/userRoutes');
-const authRoutes = require('./routes/authRoutes');
 
-app.use('/api/users', userRoutes);
-app.use('/api/auth', authRoutes);
-
+// Login y reset password de conductores
+const authRoutes = require('./routes/authRoutes'); 
 const passwordResetRoutes = require('./routes/passwordResetRoutes');
-app.use('/api', passwordResetRoutes);
 
-const avanceColoniasRoute = require('./routes/avanceColoniasRoute');
-app.use('/api', avanceColoniasRoute);
+app.use('/api/auth', authRoutes);
+app.use('/api', passwordResetRoutes); 
 
-const voboMesaRoute = require('./routes/voboMesaRoute');
-app.use('/api', voboMesaRoute);
-
-const voboMesaDistritoRoute = require('./routes/voboMesaDistritoRoute');
-app.use('/api', voboMesaDistritoRoute);
-
-const avancePorcentajeColoniasRoute = require('./routes/avancePorcentajeColoniasRoute');
-app.use('/api', avancePorcentajeColoniasRoute);
-
-const coloniasRoutes = require('./routes/coloniasRoutes');
-app.use('/api/colonias', coloniasRoutes);
-
-const getAllColoniasWithGeom = require('./routes/updateColoniasRoutes');
-app.use('/api/colonias', getAllColoniasWithGeom);
-
-const insertColoniasRoutes = require("./routes/insertColoniasRoutes");
-app.use("/api/colonias", insertColoniasRoutes);
-
-const getUsuariosChart = require("./routes/usuariosChartsRoutes");
-app.use("/api/usuarios", getUsuariosChart);
+// Login y registro de ciudadanos
+const authRoutesCiudadano = require('./routes/authRoutesCiudadano');
+app.use('/api/auth', authRoutesCiudadano); 
 
 
-const PORT = process.env.PORT || 3003;
+// RUTAS DE CONDUCTORES
+const userRoutes = require('./routes/userRoutes');
+app.use('/api/conductores', userRoutes);
+
+
+// RUTAS DE CIUDADANOS
+const ciudadanoRoutes = require('./routes/ciudadanoRoutes');
+app.use('/api/ciudadano', ciudadanoRoutes);
+
+// RUTAS DE UNIDADES
+const unidadesRoutes = require('./routes/unidadesRoutes');
+app.use('/api/unidades', unidadesRoutes);
+
+// RUTAS DE RUTAS
+const rutasRoutes = require('./routes/rutasRoutes');
+app.use('/api/rutas', rutasRoutes);
+
+//RUTAS DE VIAJES
+const viajesRoutes = require('./routes/viajesRoutes');
+app.use('/api/viajes', viajesRoutes);
+
+//RUTAS DE VUELTAS
+const vueltasRoutes = require('./routes/vueltasRoutes');
+app.use('/api/vueltas', vueltasRoutes);
+
+
+const geotabRoutes = require('./routes/gpsEnvivo');
+app.use('/api', geotabRoutes);
+
+const PORT = process.env.PORT || 3004;
 app.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`));

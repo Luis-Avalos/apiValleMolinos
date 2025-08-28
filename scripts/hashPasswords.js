@@ -3,23 +3,31 @@ const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 async function hashearPasswords() {
-  const usuarios = await prisma.usuarios_muc.findMany();
+  const usuarios = await prisma.conductores.findMany();
 
   for (const usuario of usuarios) {
-    if (!usuario.password.startsWith('$2')) {
-      const hashed = await bcrypt.hash(usuario.password, 10);
+    // Revisamos si la contraseña ya está hasheada
+    if (!usuario.password_hash.startsWith('$2')) {
+      const hashed = await bcrypt.hash(usuario.password_hash, 10);
 
-      await prisma.usuarios_muc.update({
-        where: { gid: usuario.gid },
-        data: { password: hashed },
+      await prisma.conductores.update({
+        where: { id: usuario.id },
+        data: { password_hash: hashed },
       });
 
-      console.log(`Password hasheado para ${usuario.correo}`);
+      console.log(`Password hasheado para ${usuario.email}`);
     }
   }
 
-  console.log("Todos los passwords han sido hasheados");
+  console.log("Todos los passwords de conductores han sido hasheados");
   process.exit();
 }
 
-hashearPasswords();
+hashearPasswords()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
