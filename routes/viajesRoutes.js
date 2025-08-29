@@ -2,27 +2,26 @@ const express = require('express');
 const router = express.Router();
 const viajesController = require('../controllers/viajesController');
 
-// CRUD - obtener viajes
+// --- VIAJES ---
+// Obtener todos los viajes
 router.get('/', viajesController.getViajes);
+
+// Obtener viaje por ID
 router.get('/:id', viajesController.getViajeById);
 
-// Crear viaje
-router.post('/', viajesController.createViaje); 
+// Crear un viaje
+router.post('/', viajesController.createViaje);
 
-// Asignar conductor/unidad a un viaje existente
-router.put('/:id/asignar', viajesController.asignarViaje);
+// Actualizar viaje (asignar conductor/unidad o cambiar estado)
+router.put('/:id', viajesController.updateViaje);
 
-// Iniciar / finalizar viaje
+// Iniciar viaje
 router.put('/:id/iniciar', viajesController.iniciarViaje);
+
+// Finalizar viaje
 router.put('/:id/finalizar', viajesController.finalizarViaje);
 
-// Vueltas
-router.post('/:id/vueltas', viajesController.crearVuelta);     // crear nueva vuelta
-router.put('/vueltas/:id', viajesController.actualizarVuelta); // actualizar vuelta.
-
-
-//VAIJES POR CONDUTOR
+// Obtener viajes de un conductor
 router.get('/conductor/:id', viajesController.getViajesConductor);
-
 
 module.exports = router;
