@@ -140,7 +140,7 @@ exports.updateViaje = async (req, res) => {
     if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
 
     const dataToUpdate = {};
-    const { fecha, hora_inicio, hora_fin, unidad_id, conductor_id, estado } = req.body;
+    const { fecha, hora_inicio, hora_fin, unidad_id, conductor_id, estado, pasajeros_actuales } = req.body;
 
     if (fecha) dataToUpdate.fecha = new Date(fecha);
     if (hora_inicio) dataToUpdate.hora_inicio = new Date(hora_inicio);
@@ -148,6 +148,7 @@ exports.updateViaje = async (req, res) => {
     if (unidad_id) dataToUpdate.unidad_id = unidad_id;
     if (conductor_id) dataToUpdate.conductor_id = conductor_id;
     if (estado) dataToUpdate.estado = estado;
+    if (pasajeros_actuales !== undefined) dataToUpdate.pasajeros_actuales = pasajeros_actuales; 
 
     const viaje = await prisma.viajes.update({
       where: { id },
