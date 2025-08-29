@@ -18,6 +18,11 @@ router.put('/:id/finalizar', viajesController.finalizarViaje);
 
 // Vueltas
 router.post('/:id/vueltas', viajesController.crearVuelta);     // crear nueva vuelta
-router.put('/vueltas/:id', viajesController.actualizarVuelta); // actualizar vuelta
+router.put('/vueltas/:id', viajesController.actualizarVuelta); // actualizar vuelta.
+
+
+//VAIJES POR CONDUTOR
+router.get('/conductor/:id', viajesController.getViajesConductor);
+
 
 module.exports = router;

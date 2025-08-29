@@ -242,3 +242,38 @@ exports.actualizarVuelta = async (req, res) => {
     res.status(500).json({ error: 'Error al actualizar vuelta', details: error.message });
   }
 };
+
+
+/**
+ * Obtener todos los viajes de un conductor
+ */
+exports.getViajesConductor = async (req, res) => {
+  try {
+    const conductorId = Number(req.params.id);
+    if (isNaN(conductorId)) {
+      return res.status(400).json({ error: 'ID de conductor inválido' });
+    }
+
+    const viajes = await prisma.viajes.findMany({
+      where: {
+        unidades: {
+          conductor_id: conductorId
+        }
+      },
+      include: {
+        unidades: { include: { conductores: true } },
+        rutas: true,
+        vueltas: true
+      }
+    });
+
+    if (!viajes || viajes.length === 0) {
+      return res.status(404).json({ error: 'No se encontraron viajes para este conductor' });
+    }
+
+    res.json(viajes);
+  } catch (error) {
+    console.error('Error al obtener viajes del conductor:', error);
+    res.status(500).json({ error: 'Error al obtener viajes del conductor', details: error.message });
+  }
+};
