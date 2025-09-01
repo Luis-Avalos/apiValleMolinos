@@ -1,6 +1,38 @@
 const prisma = require('../models/userModel'); // importa tu prisma client
 const bcrypt = require('bcrypt');
 
+const multer = require('multer');
+const AWS = require('aws-sdk');
+
+// Configuración de Multer (archivos en memoria)
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+// Configuración de AWS S3
+const s3 = new AWS.S3({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  endpoint: new AWS.Endpoint(process.env.AWS_URL),
+  s3ForcePathStyle: true,
+});
+
+// Función auxiliar para subir a S3
+async function subirAS3(file, userId, folder = 'conductores') {
+  const fileName = `vmprofile/${folder}/${userId}/${file.originalname}`;
+
+  const params = {
+    Bucket: process.env.AWS_BUCKET,
+    Key: fileName,
+    Body: file.buffer,
+    ContentType: file.mimetype,
+    ACL: 'public-read',
+  };
+
+  const uploadResult = await s3.upload(params).promise();
+  return uploadResult.Location; // URL pública
+}
+
+
 // Obtener todos los conductores
 exports.getAllConductores = async (req, res) => {
   try {
@@ -108,28 +140,17 @@ exports.uploadFotoPerfilConductor = [
       if (!req.files || req.files.length === 0)
         return res.status(400).json({ error: 'No se envió ninguna imagen' });
 
-      const file = req.files[0]; // <-- usar req.files[0] en vez de req.file
-      const fileName = `vmprofile/conductores/${req.params.id}/${file.originalname}`;
+      const file = req.files[0];
+      const fotoUrl = await subirAS3(file, req.params.id);
 
-      const params = {
-        Bucket: process.env.AWS_BUCKET,
-        Key: fileName,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-        ACL: 'public-read',
-      };
-
-      const uploadResult = await s3.upload(params).promise();
-
-      // Actualizar registro en Prisma
-      const conductores = await prisma.conductores.update({
+      const conductor = await prisma.conductores.update({
         where: { id: Number(req.params.id) },
-        data: { foto_perfil_url: uploadResult.Location },
+        data: { foto_perfil_url: fotoUrl },
       });
 
-      res.json({ message: 'Foto actualizada', foto_perfil_url: conductores.foto_perfil_url });
+      res.json({ message: 'Foto actualizada', foto_perfil_url: conductor.foto_perfil_url });
     } catch (err) {
-      console.error('Error en uploadFotoPerfil:', err);
+      console.error('Error en uploadFotoPerfilConductor:', err);
       res.status(500).json({ error: 'Error subiendo foto', details: err.message });
     }
   },
