@@ -109,7 +109,7 @@ exports.uploadFotoPerfilConductor = [
         return res.status(400).json({ error: 'No se envió ninguna imagen' });
 
       const file = req.files[0]; // <-- usar req.files[0] en vez de req.file
-      const fileName = `vmprofile/${req.params.id}/${file.originalname}`;
+      const fileName = `vmprofile/conductores/${req.params.id}/${file.originalname}`;
 
       const params = {
         Bucket: process.env.AWS_BUCKET,
