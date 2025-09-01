@@ -98,3 +98,39 @@ exports.deleteConductor = async (req, res) => {
     res.status(500).json({ error: 'Error al eliminar conductor', details: error.message });
   }
 };
+
+
+// --- Solo actualizar foto de perfil
+exports.uploadFotoPerfilConductor = [
+  upload.any(),
+  async (req, res) => {
+    try {
+      if (!req.files || req.files.length === 0)
+        return res.status(400).json({ error: 'No se envió ninguna imagen' });
+
+      const file = req.files[0]; // <-- usar req.files[0] en vez de req.file
+      const fileName = `vmprofile/${req.params.id}/${file.originalname}`;
+
+      const params = {
+        Bucket: process.env.AWS_BUCKET,
+        Key: fileName,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+        ACL: 'public-read',
+      };
+
+      const uploadResult = await s3.upload(params).promise();
+
+      // Actualizar registro en Prisma
+      const conductores = await prisma.conductores.update({
+        where: { id: Number(req.params.id) },
+        data: { foto_perfil_url: uploadResult.Location },
+      });
+
+      res.json({ message: 'Foto actualizada', foto_perfil_url: conductores.foto_perfil_url });
+    } catch (err) {
+      console.error('Error en uploadFotoPerfil:', err);
+      res.status(500).json({ error: 'Error subiendo foto', details: err.message });
+    }
+  },
+];
