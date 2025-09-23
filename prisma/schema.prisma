@@ -8,16 +8,17 @@ datasource db {
 }
 
 model conductores {
-  id              Int        @id @default(autoincrement())
-  nombre          String     @db.VarChar(100)
-  apellido        String     @db.VarChar(100)
-  email           String     @unique @db.VarChar(150)
+  id              Int           @id @default(autoincrement())
+  nombre          String        @db.VarChar(100)
+  apellido        String        @db.VarChar(100)
+  email           String        @unique @db.VarChar(150)
   password_hash   String
-  telefono        String?    @db.VarChar(15)
-  curp            String?    @unique @db.VarChar(18)
+  telefono        String?       @db.VarChar(15)
+  curp            String?       @unique @db.VarChar(18)
   foto_perfil_url String?
-  fecha_registro  DateTime?  @default(now()) @db.Timestamp(6)
-  rol             String?    @db.VarChar
+  fecha_registro  DateTime?     @default(now()) @db.Timestamp(6)
+  rol             String?       @db.VarChar
+  incidencias     incidencias[]
   unidades        unidades[]
 }
 
@@ -52,15 +53,16 @@ model rutas {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model unidades {
-  id               Int          @id @default(autoincrement())
-  numero_economico String       @unique @db.VarChar(20)
-  placas           String?      @db.VarChar(20)
+  id               Int           @id @default(autoincrement())
+  numero_economico String        @unique @db.VarChar(20)
+  placas           String?       @db.VarChar(20)
   capacidad        Int
-  estado           String?      @default("activo") @db.VarChar(20)
+  estado           String?       @default("activo") @db.VarChar(20)
   conductor_id     Int?
   foto_url         String?
-  creado_en        DateTime?    @default(now()) @db.Timestamp(6)
-  conductores      conductores? @relation(fields: [conductor_id], references: [id], onUpdate: NoAction)
+  creado_en        DateTime?     @default(now()) @db.Timestamp(6)
+  incidencias      incidencias[]
+  conductores      conductores?  @relation(fields: [conductor_id], references: [id], onUpdate: NoAction)
   viajes           viajes[]
 }
 
@@ -80,19 +82,20 @@ model usuarios_ciudadanos {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model viajes {
-  id                        Int       @id @default(autoincrement())
+  id                        Int           @id @default(autoincrement())
   unidad_id                 Int?
   ruta_id                   Int?
-  fecha                     DateTime  @db.Date
-  hora_inicio               DateTime  @db.Time(6)
-  hora_fin                  DateTime  @db.Time(6)
-  total_vueltas_programadas Int?      @default(1)
-  vueltas_completadas       Int?      @default(0)
-  pasajeros_actuales        Int?      @default(0)
-  estado                    String?   @default("pendiente") @db.VarChar(20)
-  creado_en                 DateTime? @default(now()) @db.Timestamp(6)
-  rutas                     rutas?    @relation(fields: [ruta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  unidades                  unidades? @relation(fields: [unidad_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  fecha                     DateTime      @db.Date
+  hora_inicio               DateTime      @db.Time(6)
+  hora_fin                  DateTime      @db.Time(6)
+  total_vueltas_programadas Int?          @default(1)
+  vueltas_completadas       Int?          @default(0)
+  pasajeros_actuales        Int?          @default(0)
+  estado                    String?       @default("pendiente") @db.VarChar(20)
+  creado_en                 DateTime?     @default(now()) @db.Timestamp(6)
+  incidencias               incidencias[]
+  rutas                     rutas?        @relation(fields: [ruta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  unidades                  unidades?     @relation(fields: [unidad_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   vueltas                   vueltas[]
 }
 
@@ -114,4 +117,17 @@ model password_resets_conductores {
   codigo     String   @db.VarChar(6)
   expires_at DateTime @db.Timestamp(6)
   used       Boolean? @default(false)
+}
+
+model incidencias {
+  id           Int         @id @default(autoincrement())
+  conductor_id Int
+  unidad_id    Int
+  viaje_id     Int?
+  descripcion  String
+  tipo         String?     @db.VarChar(50)
+  creado_en    DateTime?   @default(now()) @db.Timestamp(6)
+  conductores  conductores @relation(fields: [conductor_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_incidencia_conductor")
+  unidades     unidades    @relation(fields: [unidad_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_incidencia_unidad")
+  viajes       viajes?     @relation(fields: [viaje_id], references: [id], onUpdate: NoAction, map: "fk_incidencia_viaje")
 }
