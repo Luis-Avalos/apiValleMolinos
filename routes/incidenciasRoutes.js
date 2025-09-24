@@ -5,6 +5,6 @@ const router = express.Router();
 
 router.post('/', createIncidencia);     // Crear incidencia
 router.get('/', getIncidencias);        // Listar incidencias
-router.get('/:id', getIncidenciaById);  // Buscar incidencia por ID
+router.get('/:id', getIncidenciaById);  
 
 module.exports = router;

@@ -14,12 +14,16 @@ const createIncidencia = async (req, res) => {
       data: { conductor_id, unidad_id, viaje_id, descripcion, tipo }
     });
 
+    // Emitir evento a todos los clientes conectados
+    req.app.get("io").emit("nueva_incidencia", incidencia);
+
     res.json(incidencia);
   } catch (error) {
     console.error('Error al crear incidencia:', error);
     res.status(500).json({ error: 'Error en el servidor' });
   }
 };
+
 
 // Listar todas
 const getIncidencias = async (req, res) => {
