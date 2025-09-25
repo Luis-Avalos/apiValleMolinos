@@ -5,6 +5,9 @@ const viajesController = require('../controllers/viajesController');
 // Obtener todos los viajes
 router.get('/', viajesController.getViajes);
 
+//Obtener Subidas
+router.get('/bitacora', viajesController.getSubidas);
+
 // Obtener viaje por ID
 router.get('/:id', viajesController.getViajeById);
 
@@ -22,5 +25,8 @@ router.put('/:id/finalizar', viajesController.finalizarViaje);
 
 // Obtener viajes de un conductor
 router.get('/conductor/:id', viajesController.getViajesConductor);
+
+
+
 
 module.exports = router;

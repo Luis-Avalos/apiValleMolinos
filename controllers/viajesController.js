@@ -211,3 +211,28 @@ exports.updateViaje = async (req, res) => {
   }
 };
 
+
+// Obtener todos las subidas
+exports.getSubidas = async (req, res) => {
+  try {
+    const bitacoracupos = await prisma.bitacora_cupos.findMany({
+      select: {
+    id: true,
+    viaje_id: true,
+    latitud: true,
+    longitud: true,
+    ascensos: true,
+    descensos: true,
+    fecha_hora: true
+  },
+  orderBy: {
+    fecha_hora: 'desc'
+  }
+    });
+    res.json(bitacoracupos);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener viajes', details: error.message });
+  }
+};
+
+
