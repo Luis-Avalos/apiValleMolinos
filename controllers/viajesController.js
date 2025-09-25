@@ -137,31 +137,77 @@ exports.getViajesConductor = async (req, res) => {
 exports.updateViaje = async (req, res) => {
   try {
     const id = Number(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
+    if (isNaN(id)) return res.status(400).json({ error: "ID inválido" });
 
+    const {
+      fecha,
+      hora_inicio,
+      hora_fin,
+      unidad_id,
+      conductor_id,
+      estado,
+      pasajeros_actuales,
+      latitud,
+      longitud
+    } = req.body;
+
+    // estado del viaje
+    const viajeActual = await prisma.viajes.findUnique({
+      where: { id },
+      select: { pasajeros_actuales: true }
+    });
+
+    if (!viajeActual) {
+      return res.status(404).json({ error: "Viaje no encontrado" });
+    }
+
+   
     const dataToUpdate = {};
-    const { fecha, hora_inicio, hora_fin, unidad_id, conductor_id, estado, pasajeros_actuales } = req.body;
-
     if (fecha) dataToUpdate.fecha = new Date(fecha);
     if (hora_inicio) dataToUpdate.hora_inicio = new Date(hora_inicio);
     if (hora_fin) dataToUpdate.hora_fin = new Date(hora_fin);
     if (unidad_id) dataToUpdate.unidad_id = unidad_id;
     if (conductor_id) dataToUpdate.conductor_id = conductor_id;
     if (estado) dataToUpdate.estado = estado;
-    if (pasajeros_actuales !== undefined) dataToUpdate.pasajeros_actuales = pasajeros_actuales; 
+    if (pasajeros_actuales !== undefined) dataToUpdate.pasajeros_actuales = pasajeros_actuales;
 
+    //  Actualizar viaje
     const viaje = await prisma.viajes.update({
       where: { id },
       data: dataToUpdate,
       include: {
         unidades: { include: { conductores: true } },
-        rutas: true
+        rutas: true,
+        bitacora_cupos: true
       }
     });
 
+    // Registrar si cambiaron pasajeros
+    if (pasajeros_actuales !== undefined) {
+      const anterior = viajeActual.pasajeros_actuales || 0;
+      const diferencia = pasajeros_actuales - anterior;
+
+      if (diferencia !== 0) {
+        await prisma.bitacora_cupos.create({
+          data: {
+            viaje_id: id,
+            latitud: latitud || "0.0",
+            longitud: longitud || "0.0",
+            ascensos: diferencia > 0 ? diferencia : 0,
+            descensos: diferencia < 0 ? Math.abs(diferencia) : 0,
+            fecha_hora: new Date()
+          }
+        });
+      }
+    }
+
     res.json(viaje);
   } catch (error) {
-    console.error('Error al actualizar viaje:', error);
-    res.status(500).json({ error: 'Error al actualizar viaje', details: error.message });
+    console.error("Error al actualizar viaje:", error);
+    res.status(500).json({
+      error: "Error al actualizar viaje",
+      details: error.message
+    });
   }
 };
+
