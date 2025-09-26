@@ -27,6 +27,4 @@ router.put('/:id/finalizar', viajesController.finalizarViaje);
 router.get('/conductor/:id', viajesController.getViajesConductor);
 
 
-
-
 module.exports = router;

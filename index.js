@@ -49,6 +49,9 @@ app.use('/api', geotabRoutes);
 const incidenciasRoutes = require('./routes/incidenciasRoutes');
 app.use('/api/incidencias', incidenciasRoutes);
 
+const dashboard = require('./routes/dashboard');
+app.use('/api/dashboard', dashboard);
+
 // Cuando un cliente se conecta
 io.on("connection", (socket) => {
   console.log("Cliente conectado:", socket.id);
