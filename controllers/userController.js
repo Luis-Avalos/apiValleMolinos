@@ -60,64 +60,86 @@ exports.getConductorById = async (req, res) => {
 };
 
 // Crear conductor
-exports.createConductor = async (req, res) => {
-  try {
-    const { nombre, apellido, email, password, telefono, curp, foto_perfil_url } = req.body;
+exports.createConductor = [
+  upload.any(),
+  async (req, res) => {
+    try {
+      const { nombre, apellido, email, password, telefono, curp } = req.body;
 
-    // Validar email único
-    const existing = await prisma.conductores.findUnique({ where: { email } });
-    if (existing) return res.status(400).json({ error: 'El correo ya está registrado' });
+      // Validar email único
+      const existing = await prisma.conductores.findUnique({ where: { email } });
+      if (existing) return res.status(400).json({ error: 'El correo ya está registrado' });
 
-    // Hashear password
-    const hashed = await bcrypt.hash(password, 10);
+      // Hashear password
+      const hashed = await bcrypt.hash(password, 10);
 
-    const nuevo = await prisma.conductores.create({
-      data: { 
-        nombre, 
-        apellido, 
-        email, 
-        password_hash: hashed,
-        telefono, 
-        curp, 
-        foto_perfil_url 
+      // Subir foto si viene
+      let fotoUrl = null;
+      if (req.files && req.files.length > 0) {
+        fotoUrl = await subirAS3(req.files[0], email, 'conductores');
       }
-    });
 
-    res.status(201).json(nuevo);
-  } catch (error) {
-    res.status(500).json({ error: 'Error al crear conductor', details: error.message });
+      const nuevo = await prisma.conductores.create({
+        data: { 
+          nombre, 
+          apellido, 
+          email, 
+          password_hash: hashed,
+          telefono, 
+          curp, 
+          foto_perfil_url: fotoUrl
+        }
+      });
+
+      res.status(201).json(nuevo);
+    } catch (error) {
+      console.error("Error en createConductor:", error);
+      res.status(500).json({ error: 'Error al crear conductor', details: error.message });
+    }
   }
-};
+];
+
 
 // Actualizar conductor
-exports.updateConductor = async (req, res) => {
-  try {
-    const { nombre, apellido, email, password, telefono, curp, foto_perfil_url } = req.body;
+exports.updateConductor = [
+  upload.any(),
+  async (req, res) => {
+    try {
+      const { nombre, apellido, email, password, telefono, curp } = req.body;
 
-    const dataToUpdate = {};
+      const dataToUpdate = {};
 
-    if (nombre) dataToUpdate.nombre = nombre;
-    if (apellido) dataToUpdate.apellido = apellido;
-    if (email) dataToUpdate.email = email;
-    if (telefono) dataToUpdate.telefono = telefono;
-    if (curp) dataToUpdate.curp = curp;
-    if (foto_perfil_url) dataToUpdate.foto_perfil_url = foto_perfil_url;
+      if (nombre) dataToUpdate.nombre = nombre;
+      if (apellido) dataToUpdate.apellido = apellido;
+      if (email) dataToUpdate.email = email;
+      if (telefono) dataToUpdate.telefono = telefono;
+      if (curp) dataToUpdate.curp = curp;
 
-    if (password) {
-      const hashed = await bcrypt.hash(password, 10);
-      dataToUpdate.password_hash = hashed;
+      // Si viene nueva contraseña
+      if (password) {
+        const hashed = await bcrypt.hash(password, 10);
+        dataToUpdate.password_hash = hashed;
+      }
+
+      // Si viene archivo, subir a S3
+      if (req.files && req.files.length > 0) {
+        const fotoUrl = await subirAS3(req.files[0], req.params.id, 'conductores');
+        dataToUpdate.foto_perfil_url = fotoUrl;
+      }
+
+      const conductor = await prisma.conductores.update({
+        where: { id: Number(req.params.id) },
+        data: dataToUpdate
+      });
+
+      res.json(conductor);
+    } catch (error) {
+      console.error("Error en updateConductor:", error);
+      res.status(500).json({ error: 'Error al actualizar conductor', details: error.message });
     }
-
-    const conductor = await prisma.conductores.update({
-      where: { id: Number(req.params.id) },
-      data: dataToUpdate
-    });
-
-    res.json(conductor);
-  } catch (error) {
-    res.status(500).json({ error: 'Error al actualizar conductor', details: error.message });
   }
-};
+];
+
 
 // Eliminar conductor
 exports.deleteConductor = async (req, res) => {
@@ -132,7 +154,7 @@ exports.deleteConductor = async (req, res) => {
 };
 
 
-// --- Solo actualizar foto de perfil
+//Solo actualizar foto de perfil
 exports.uploadFotoPerfilConductor = [
   upload.any(),
   async (req, res) => {
