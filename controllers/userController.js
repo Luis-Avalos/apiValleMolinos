@@ -87,6 +87,7 @@ exports.createConductor = [
           password_hash: hashed,
           telefono, 
           curp, 
+          rol : "conductor", 
           foto_perfil_url: fotoUrl
         }
       });
@@ -98,7 +99,6 @@ exports.createConductor = [
     }
   }
 ];
-
 
 // Actualizar conductor
 exports.updateConductor = [
