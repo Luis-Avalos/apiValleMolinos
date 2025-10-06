@@ -31,29 +31,61 @@ exports.getViajeById = async (req, res) => {
   }
 };
 
+
 // Crear un nuevo viaje
 exports.createViaje = async (req, res) => {
   try {
-    const { ruta_id, fecha, hora_inicio, hora_fin } = req.body;
+    const {
+      ruta_id,
+      fecha,
+      hora_inicio,
+      hora_fin,
+      unidad_id,
+      conductor_id,
+      total_vueltas_programadas,
+      estado,
+    } = req.body;
+
     if (!ruta_id || !fecha || !hora_inicio || !hora_fin) {
       return res.status(400).json({ error: 'Faltan datos necesarios' });
     }
 
+    // Crear el viaje con los datos proporcionados
     const viaje = await prisma.viajes.create({
       data: {
-        ruta_id,
+        ruta_id: parseInt(ruta_id),
         fecha: new Date(fecha),
         hora_inicio: new Date(hora_inicio),
         hora_fin: new Date(hora_fin),
-        estado: 'pendiente'
-      }
+        unidad_id: unidad_id ? parseInt(unidad_id) : null,
+        estado: estado || 'pendiente',
+        total_vueltas_programadas: total_vueltas_programadas
+          ? parseInt(total_vueltas_programadas)
+          : 1,
+      },
+      include: {
+        unidades: true,
+        rutas: true,
+      },
     });
+
+    // Si hay conductor y unidad, actualiza el conductor asignado a esa unidad
+    if (conductor_id && unidad_id) {
+      await prisma.unidades.update({
+        where: { id: parseInt(unidad_id) },
+        data: { conductor_id: parseInt(conductor_id) },
+      });
+    }
 
     res.status(201).json(viaje);
   } catch (error) {
-    res.status(500).json({ error: 'Error al crear viaje', details: error.message });
+    console.error('Error al crear viaje:', error);
+    res
+      .status(500)
+      .json({ error: 'Error al crear viaje', details: error.message });
   }
 };
+
 
 // Asignar conductor/unidad a un viaje
 exports.asignarViaje = async (req, res) => {
@@ -131,8 +163,6 @@ exports.getViajesConductor = async (req, res) => {
     res.status(500).json({ error: 'Error al obtener viajes', details: error.message });
   }
 };
-
-
 // Actualizar viaje
 exports.updateViaje = async (req, res) => {
   try {
@@ -210,7 +240,6 @@ exports.updateViaje = async (req, res) => {
     });
   }
 };
-
 
 // Obtener todos las subidas
 exports.getSubidas = async (req, res) => {
