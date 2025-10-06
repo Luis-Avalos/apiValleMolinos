@@ -40,6 +40,9 @@ app.use('/api/rutas', rutasRoutes);
 const viajesRoutes = require('./routes/viajesRoutes');
 app.use('/api/viajes', viajesRoutes);
 
+const bitacora_estadisticas = require('./routes/bitacoraEstadisticasRoutes');
+app.use('/api/estadisticaViajes', bitacora_estadisticas); //esta api se enfoca en las estadisticas de subidas y descensos
+
 const vueltasRoutes = require('./routes/vueltasRoutes');
 app.use('/api/vueltas', vueltasRoutes);
 

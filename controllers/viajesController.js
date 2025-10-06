@@ -235,4 +235,3 @@ exports.getSubidas = async (req, res) => {
   }
 };
 
-
