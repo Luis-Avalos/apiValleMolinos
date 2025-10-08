@@ -4,19 +4,7 @@ const prisma = new PrismaClient();
 exports.getSubidasEstadisticas = async (req, res) => {
 
     try {
-        //vamos a usar raw en prisma para hacer una consiultapersonalizada
-        /*const estatQuery = await prisma.$queryRaw`
-        SELECT 
-            e.id AS estacion_id,
-            e.nombre AS estacion,
-            SUM(bc.ascensos) AS total_ascensos,
-            SUM(bc.descensos) AS total_descensos
-        FROM bitacora_cupos bc
-        INNER JOIN estaciones e 
-            ON e.id = bc.fk_estaciones
-                GROUP BY e.id, e.nombre
-                ORDER BY e.nombre;
-        `;*/
+        
         const estatQuery = await prisma.$queryRaw`
                 SELECT 
             e.id AS estacion_id,

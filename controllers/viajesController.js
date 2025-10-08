@@ -205,6 +205,7 @@ exports.updateViaje = async (req, res) => {
       longitud,
     } = req.body;
 
+
     // Verifica existencia del viaje
     const viajeActual = await prisma.viajes.findUnique({
       where: { id },
@@ -218,13 +219,21 @@ exports.updateViaje = async (req, res) => {
     if (hora_inicio) dataToUpdate.hora_inicio = new Date(hora_inicio);
     if (hora_fin) dataToUpdate.hora_fin = new Date(hora_fin);
     if (estado) dataToUpdate.estado = estado;
-    if (pasajeros_actuales !== undefined)
-      dataToUpdate.pasajeros_actuales = pasajeros_actuales;
+
+    //Asegurar que pasajeros_actuales se interprete como número
+    const nuevosPasajeros =
+      pasajeros_actuales !== undefined && pasajeros_actuales !== null
+        ? Number(pasajeros_actuales)
+        : undefined;
+
+    if (!isNaN(nuevosPasajeros)) {
+      dataToUpdate.pasajeros_actuales = nuevosPasajeros;
+    }
 
     if (unidad_id) dataToUpdate.unidad_id = parseInt(unidad_id);
     if (ruta_id) dataToUpdate.ruta_id = parseInt(ruta_id);
 
-    // Actualizar conductor si se manda
+    //Actualizar conductor si se manda
     if (conductor_id && unidad_id) {
       await prisma.unidades.update({
         where: { id: parseInt(unidad_id) },
@@ -232,6 +241,7 @@ exports.updateViaje = async (req, res) => {
       });
     }
 
+    // Actualizar el viaje
     const viaje = await prisma.viajes.update({
       where: { id },
       data: dataToUpdate,
@@ -242,23 +252,31 @@ exports.updateViaje = async (req, res) => {
       },
     });
 
-    // Si cambió el número de pasajeros, registrar en bitácora
-    if (pasajeros_actuales !== undefined) {
-      const anterior = viajeActual.pasajeros_actuales || 0;
-      const diferencia = pasajeros_actuales - anterior;
+    // Registrar en bitácora si cambia pasajeros_actuales
+    if (!isNaN(nuevosPasajeros)) {
+      const anterior = Number(viajeActual.pasajeros_actuales) || 0;
+      const diferencia = nuevosPasajeros - anterior;
+
+      console.log(`👥 Pasajeros antes: ${anterior}, ahora: ${nuevosPasajeros}, diferencia: ${diferencia}`);
 
       if (diferencia !== 0) {
         await prisma.bitacora_cupos.create({
           data: {
             viaje_id: id,
-            latitud: latitud || '0.0',
-            longitud: longitud || '0.0',
+            latitud: latitud ? String(latitud) : '0.0',
+            longitud: longitud ? String(longitud) : '0.0',
             ascensos: diferencia > 0 ? diferencia : 0,
             descensos: diferencia < 0 ? Math.abs(diferencia) : 0,
             fecha_hora: new Date(),
           },
         });
+
+        console.log('Bitácora de cupos registrada correctamente');
+      } else {
+        console.log('No hubo cambio en pasajeros, no se registró bitácora');
       }
+    } else {
+      console.log('pasajeros_actuales no enviado o no es un número válido');
     }
 
     res.json(viaje);
