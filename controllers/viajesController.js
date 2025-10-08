@@ -1,5 +1,16 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { Pool } = require('pg');
+
+
+const pool = new Pool({
+  host: process.env.DB_HOST || '10.10.23.78',
+  user: process.env.DB_USER || 'geo_luavalos',
+  password: process.env.DB_PASS || 'luisernesto',
+  database: process.env.DB_NAME || 'zapopan_geo_pg',
+  port: process.env.DB_PORT || 5432,
+  search_path: 'vallemolinostest'
+});
 
 /* ===============================
     OBTENER TODOS LOS VIAJES
@@ -184,10 +195,13 @@ exports.getViajesConductor = async (req, res) => {
   }
 };
 
+
 /* ===============================
-    ACTUALIZAR VIAJE
+    ACTUALIZAR VIAJE (mixto: Prisma + Node puro)
    =============================== */
 exports.updateViaje = async (req, res) => {
+  const client = await pool.connect();
+
   try {
     const id = Number(req.params.id);
     if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
@@ -205,7 +219,6 @@ exports.updateViaje = async (req, res) => {
       longitud,
     } = req.body;
 
-
     // Verifica existencia del viaje
     const viajeActual = await prisma.viajes.findUnique({
       where: { id },
@@ -213,14 +226,13 @@ exports.updateViaje = async (req, res) => {
     });
     if (!viajeActual) return res.status(404).json({ error: 'Viaje no encontrado' });
 
-    // Datos dinámicos a actualizar
+    // Prepara los datos a actualizar
     const dataToUpdate = {};
     if (fecha) dataToUpdate.fecha = new Date(fecha);
     if (hora_inicio) dataToUpdate.hora_inicio = new Date(hora_inicio);
     if (hora_fin) dataToUpdate.hora_fin = new Date(hora_fin);
     if (estado) dataToUpdate.estado = estado;
 
-    //Asegurar que pasajeros_actuales se interprete como número
     const nuevosPasajeros =
       pasajeros_actuales !== undefined && pasajeros_actuales !== null
         ? Number(pasajeros_actuales)
@@ -233,7 +245,7 @@ exports.updateViaje = async (req, res) => {
     if (unidad_id) dataToUpdate.unidad_id = parseInt(unidad_id);
     if (ruta_id) dataToUpdate.ruta_id = parseInt(ruta_id);
 
-    //Actualizar conductor si se manda
+    // Actualiza conductor si se envía
     if (conductor_id && unidad_id) {
       await prisma.unidades.update({
         where: { id: parseInt(unidad_id) },
@@ -241,7 +253,7 @@ exports.updateViaje = async (req, res) => {
       });
     }
 
-    // Actualizar el viaje
+    //  Actualiza viaje con Prisma
     const viaje = await prisma.viajes.update({
       where: { id },
       data: dataToUpdate,
@@ -252,40 +264,40 @@ exports.updateViaje = async (req, res) => {
       },
     });
 
-    // Registrar en bitácora si cambia pasajeros_actuales
+    //  Registra en bitácora con SQL nativo (evita ST_MakePoint de Prisma)
     if (!isNaN(nuevosPasajeros)) {
       const anterior = Number(viajeActual.pasajeros_actuales) || 0;
       const diferencia = nuevosPasajeros - anterior;
 
-      console.log(`👥 Pasajeros antes: ${anterior}, ahora: ${nuevosPasajeros}, diferencia: ${diferencia}`);
+      console.log(
+        ` Pasajeros antes: ${anterior}, ahora: ${nuevosPasajeros}, diferencia: ${diferencia}`
+      );
 
       if (diferencia !== 0) {
-        await prisma.bitacora_cupos.create({
-          data: {
-            viaje_id: id,
-            latitud: latitud ? String(latitud) : '0.0',
-            longitud: longitud ? String(longitud) : '0.0',
-            ascensos: diferencia > 0 ? diferencia : 0,
-            descensos: diferencia < 0 ? Math.abs(diferencia) : 0,
-            fecha_hora: new Date(),
-          },
-        });
+        const ascensos = diferencia > 0 ? diferencia : 0;
+        const descensos = diferencia < 0 ? Math.abs(diferencia) : 0;
+        const lat = parseFloat(latitud) || 0.0;
+        const lon = parseFloat(longitud) || 0.0;
 
-        console.log('Bitácora de cupos registrada correctamente');
-      } else {
-        console.log('No hubo cambio en pasajeros, no se registró bitácora');
+        const query = `
+          INSERT INTO bitacora_cupos 
+          (viaje_id, latitud, longitud, ascensos, descensos, fecha_hora, ubicacion)
+          VALUES ($1, $2, $3, $4, $5, NOW(), ST_SetSRID(ST_MakePoint($3, $2), 4326))
+        `;
+
+        await client.query(query, [id, lat, lon, ascensos, descensos]);
+        console.log(' Bitácora insertada con Node puro');
       }
-    } else {
-      console.log('pasajeros_actuales no enviado o no es un número válido');
     }
 
     res.json(viaje);
   } catch (error) {
-    console.error('Error al actualizar viaje:', error);
+    console.error(' Error al actualizar viaje:', error);
     res.status(500).json({ error: 'Error al actualizar viaje', details: error.message });
+  } finally {
+    client.release();
   }
 };
-
 /* ===============================
    OBTENER BITÁCORA DE CUPOS
    =============================== */
