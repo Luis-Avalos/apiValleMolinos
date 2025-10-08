@@ -82,22 +82,22 @@ model usuarios_ciudadanos {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model viajes {
-  id                        Int           @id @default(autoincrement())
+  id                        Int              @id @default(autoincrement())
   unidad_id                 Int?
   ruta_id                   Int?
-  fecha                     DateTime      @db.Date
-  hora_inicio               DateTime      @db.Time(6)
-  hora_fin                  DateTime      @db.Time(6)
-  total_vueltas_programadas Int?          @default(1)
-  vueltas_completadas       Int?          @default(0)
-  pasajeros_actuales        Int?          @default(0)
-  estado                    String?       @default("pendiente") @db.VarChar(20)
-  creado_en                 DateTime?     @default(now()) @db.Timestamp(6)
+  fecha                     DateTime         @db.Date
+  hora_inicio               DateTime         @db.Time(6)
+  hora_fin                  DateTime         @db.Time(6)
+  total_vueltas_programadas Int?             @default(1)
+  vueltas_completadas       Int?             @default(0)
+  pasajeros_actuales        Int?             @default(0)
+  estado                    String?          @default("pendiente") @db.VarChar(20)
+  creado_en                 DateTime?        @default(now()) @db.Timestamp(6)
   incidencias               incidencias[]
-  rutas                     rutas?        @relation(fields: [ruta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  unidades                  unidades?     @relation(fields: [unidad_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  rutas                     rutas?           @relation(fields: [ruta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  unidades                  unidades?        @relation(fields: [unidad_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   vueltas                   vueltas[]
-  bitacora_cupos  bitacora_cupos[] @relation("ViajeBitacoraCupos") 
+  bitacora_cupos            bitacora_cupos[] @relation("ViajeBitacoraCupos")
 }
 
 model vueltas {
@@ -133,11 +133,9 @@ model incidencias {
   viajes       viajes?     @relation(fields: [viaje_id], references: [id], onUpdate: NoAction, map: "fk_incidencia_viaje")
 }
 
-
 model bitacora_cupos {
   id            Int         @id(map: "bitacora_cupos_pk") @default(autoincrement())
   viaje_id      Int
-  viaje         viajes   @relation("ViajeBitacoraCupos", fields: [viaje_id], references: [id])
   latitud       String      @db.VarChar(50)
   longitud      String      @db.VarChar(50)
   ascensos      Int?        @default(0)
@@ -145,9 +143,8 @@ model bitacora_cupos {
   fecha_hora    DateTime?   @default(now()) @db.Timestamp(6)
   fk_estaciones Int?
   estaciones    estaciones? @relation(fields: [fk_estaciones], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_bitacora_estaciones")
-  viajes        viajes      @relation(fields: [viaje_id], references: [id], onDelete: Cascade)
+  viajes        viajes      @relation("ViajeBitacoraCupos", fields: [viaje_id], references: [id], onDelete: Cascade)
 }
-
 
 model estaciones {
   id             Int              @id @default(autoincrement())
