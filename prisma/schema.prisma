@@ -155,15 +155,15 @@ model estaciones {
   bitacora_cupos bitacora_cupos[]
 }
 
-model estaciones_poligonos {
-  gid         Int                      @id @default(autoincrement())
-  id          Float?
-  nombre      String?                  @db.VarChar(80)
-  lat         String?                  @db.VarChar(11)
-  lng         String?                  @db.VarChar(11)
-  ruta_asig   String?                  @db.VarChar(30)
-  fk_estacion Float?
-  geom        Unsupported("geometry")?
+// model estaciones_poligonos {
+//   gid         Int                      @id @default(autoincrement())
+//   id          Float?
+//   nombre      String?                  @db.VarChar(80)
+//   lat         String?                  @db.VarChar(11)
+//   lng         String?                  @db.VarChar(11)
+//   ruta_asig   String?                  @db.VarChar(30)
+//   fk_estacion Float?
+//   geom        Unsupported("geometry")?
 
-  @@index([geom], type: Gist)
-}
+//   @@index([geom], type: Gist)
+// }
