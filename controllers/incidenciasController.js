@@ -51,10 +51,17 @@ const getIncidencias = async (req, res) => {
         i.creado_en,
         c.nombre AS nombre_conductor,
         c.apellido AS apellido_conductor,
+        c.email AS email_conductor,
+        c.telefono AS telefono_conductor,
+        c.curp AS curp_conductor,
+        c.foto_perfil_url AS foto_conductor,
         u.numero_economico AS numero_unidad,
-        u.placas,
+        u.placas AS placas_unidad,
+        u.foto_url AS foto_unidad,
         v.hora_inicio,
-        v.hora_fin
+        v.hora_fin,
+        v.estado AS estado_viaje
+
       FROM vallemolinostest.incidencias i
       LEFT JOIN vallemolinostest.conductores c ON i.conductor_id = c.id
       LEFT JOIN vallemolinostest.unidades u ON i.unidad_id = u.id
@@ -69,7 +76,6 @@ const getIncidencias = async (req, res) => {
     res.status(500).json({ error: 'Error en el servidor' });
   }
 };
-
 //  Obtener una incidencia por ID
 const getIncidenciaById = async (req, res) => {
   try {
@@ -88,10 +94,17 @@ const getIncidenciaById = async (req, res) => {
         i.creado_en,
         c.nombre AS nombre_conductor,
         c.apellido AS apellido_conductor,
+        c.email AS email_conductor,
+        c.telefono AS telefono_conductor,
+        c.curp AS curp_conductor,
+        c.foto_perfil_url AS foto_conductor,
         u.numero_economico AS numero_unidad,
-        u.placas,
+        u.placas AS placas_unidad,
+        u.foto_url AS foto_unidad,
         v.hora_inicio,
-        v.hora_fin
+        v.hora_fin,
+        v.estado AS estado_viaje
+
       FROM vallemolinostest.incidencias i
       LEFT JOIN vallemolinostest.conductores c ON i.conductor_id = c.id
       LEFT JOIN vallemolinostest.unidades u ON i.unidad_id = u.id
@@ -107,10 +120,11 @@ const getIncidenciaById = async (req, res) => {
 
     res.json(result.rows[0]);
   } catch (error) {
-    console.error('❌ Error al obtener incidencia:', error);
+    console.error(' Error al obtener incidencia:', error);
     res.status(500).json({ error: 'Error en el servidor' });
   }
 };
+
 
 module.exports = {
   createIncidencia,
