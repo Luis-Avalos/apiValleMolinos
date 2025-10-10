@@ -3,7 +3,9 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-//  Crear incidencia
+
+
+// Crear incidencia
 const createIncidencia = async (req, res) => {
   try {
     const { conductor_id, unidad_id, viaje_id, descripcion, tipo, latitud, longitud } = req.body;
@@ -44,6 +46,8 @@ const getIncidencias = async (req, res) => {
         i.viaje_id,
         i.descripcion,
         i.tipo,
+        i.latitud,
+        i.longitud,
         i.creado_en,
         c.nombre AS nombre_conductor,
         c.apellido AS apellido_conductor,
@@ -66,8 +70,7 @@ const getIncidencias = async (req, res) => {
   }
 };
 
-
-// Obtener una incidencia por ID
+//  Obtener una incidencia por ID
 const getIncidenciaById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -80,6 +83,8 @@ const getIncidenciaById = async (req, res) => {
         i.viaje_id,
         i.descripcion,
         i.tipo,
+        i.latitud,
+        i.longitud,
         i.creado_en,
         c.nombre AS nombre_conductor,
         c.apellido AS apellido_conductor,
@@ -102,9 +107,15 @@ const getIncidenciaById = async (req, res) => {
 
     res.json(result.rows[0]);
   } catch (error) {
-    console.error(' Error al obtener incidencia:', error);
+    console.error('❌ Error al obtener incidencia:', error);
     res.status(500).json({ error: 'Error en el servidor' });
   }
+};
+
+module.exports = {
+  createIncidencia,
+  getIncidencias,
+  getIncidenciaById,
 };
 
 
