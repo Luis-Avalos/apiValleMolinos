@@ -97,4 +97,72 @@ router.get('/geotab/vehiculos', async (req, res) => {
   }
 });
 
+router.get('/geotab/vcamioncitozapopan', async (req, res) => {
+  try {
+    if (!sessionId) await authenticate();
+
+    const creds = {
+      database: GEOTAB_DB,
+      sessionId: sessionId,
+      userName: GEOTAB_USER
+    };
+
+
+    const dispositivos = await axiosInstance.post(`${server}/apiv1`, {
+      method: "Get",
+      params: {
+        typeName: "Device",
+        search: {
+          groups: [{ id: "b27C0" }]
+        },
+        credentials: creds
+      }
+    });
+
+    const statusInfos = dispositivos.data.result;
+
+    const filtro = statusInfos.map(info => ({
+      id: info.id,
+      name: info.name,
+      licensePlate: info.licensePlate,
+      vin: info.vehicleIdentificationNumber,
+      groups: info.groups
+    }));
+
+
+    const status = await axiosInstance.post(`${server}/apiv1`, {
+      method: "Get",
+      params: {
+        typeName: "DeviceStatusInfo",
+        credentials: creds
+      }
+    });
+
+    const addressResults = status.data.result;
+    
+    const coordenadas = filtro.map(f => {
+      const matching = addressResults.find(d => d.device.id === f.id);
+      if (matching) {
+        return {
+          x: matching.longitude,
+          y: matching.latitude,
+          id_dev: matching.device.id,
+          speed: matching.speed,
+          dateTime: matching.dateTime,
+          grupo: f.groups,
+          nombre: f.name,
+          placas: f.licensePlate,
+          identificador: f.vin
+        };
+      }
+      return null;
+    }).filter(Boolean);
+
+    res.json(coordenadas);
+  } catch (err) {
+    console.error("Error obteniendo datos de Geotab:", err.response?.data || err.message);
+    res.status(500).json({ error: "Error al obtener datos desde Geotab" });
+  }
+});
+
 module.exports = router;
