@@ -1,12 +1,9 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-
-
 const { Pool } = require('pg');
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL, 
+  connectionString: process.env.DATABASE_URL,
 });
 
+//  Crear incidencia
 const createIncidencia = async (req, res) => {
   try {
     const { conductor_id, unidad_id, viaje_id, descripcion, tipo, latitud, longitud } = req.body;
@@ -16,7 +13,8 @@ const createIncidencia = async (req, res) => {
     }
 
     const query = `
-      INSERT INTO vallemolinostest.incidencias (conductor_id, unidad_id, viaje_id, descripcion, tipo, latitud, longitud, creado_en)
+      INSERT INTO vallemolinostest.incidencias 
+      (conductor_id, unidad_id, viaje_id, descripcion, tipo, latitud, longitud, creado_en)
       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
       RETURNING *;
     `;
@@ -25,51 +23,85 @@ const createIncidencia = async (req, res) => {
     const result = await pool.query(query, values);
     const incidencia = result.rows[0];
 
-    // Emitir evento en tiempo real
+    // Emitir evento en tiempo real (Socket.IO)
     req.app.get('io').emit('nueva_incidencia', incidencia);
 
     res.json(incidencia);
   } catch (error) {
-    console.error('Error al crear incidencia:', error);
+    console.error(' Error al crear incidencia:', error);
     res.status(500).json({ error: 'Error en el servidor' });
   }
 };
 
-
-
+//  Obtener todas las incidencias
 const getIncidencias = async (req, res) => {
   try {
-    const incidencias = await prisma.incidencias.findMany({
-      include: {
-        conductores: true,
-        unidades: true,
-        viajes: true
-      },
-      orderBy: { creado_en: 'desc' }
-    });
-    res.json(incidencias);
+    const query = `
+      SELECT 
+        i.id,
+        i.conductor_id,
+        i.unidad_id,
+        i.viaje_id,
+        i.descripcion,
+        i.tipo,
+        i.latitud,
+        i.longitud,
+        i.creado_en,
+        c.nombre AS nombre_conductor,
+        u.nombre AS nombre_unidad,
+        v.hora_inicio,
+        v.hora_fin
+      FROM vallemolinostest.incidencias i
+      LEFT JOIN vallemolinostest.conductores c ON i.conductor_id = c.id
+      LEFT JOIN vallemolinostest.unidades u ON i.unidad_id = u.id
+      LEFT JOIN vallemolinostest.viajes v ON i.viaje_id = v.id
+      ORDER BY i.creado_en DESC;
+    `;
+
+    const result = await pool.query(query);
+    res.json(result.rows);
   } catch (error) {
-    console.error('Error al obtener incidencias:', error);
+    console.error(' Error al obtener incidencias:', error);
     res.status(500).json({ error: 'Error en el servidor' });
   }
 };
 
-
+// Obtener una incidencia por ID
 const getIncidenciaById = async (req, res) => {
   try {
     const { id } = req.params;
-    const incidencia = await prisma.incidencias.findUnique({
-      where: { id: Number(id) },
-      include: { conductores: true, unidades: true, viajes: true }
-    });
 
-    if (!incidencia) {
+    const query = `
+      SELECT 
+        i.id,
+        i.conductor_id,
+        i.unidad_id,
+        i.viaje_id,
+        i.descripcion,
+        i.tipo,
+        i.latitud,
+        i.longitud,
+        i.creado_en,
+        c.nombre AS nombre_conductor,
+        u.nombre AS nombre_unidad,
+        v.hora_inicio,
+        v.hora_fin
+      FROM vallemolinostest.incidencias i
+      LEFT JOIN vallemolinostest.conductores c ON i.conductor_id = c.id
+      LEFT JOIN vallemolinostest.unidades u ON i.unidad_id = u.id
+      LEFT JOIN vallemolinostest.viajes v ON i.viaje_id = v.id
+      WHERE i.id = $1;
+    `;
+
+    const result = await pool.query(query, [id]);
+
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Incidencia no encontrada' });
     }
 
-    res.json(incidencia);
+    res.json(result.rows[0]);
   } catch (error) {
-    console.error('Error al obtener incidencia:', error);
+    console.error(' Error al obtener incidencia:', error);
     res.status(500).json({ error: 'Error en el servidor' });
   }
 };
@@ -77,5 +109,5 @@ const getIncidenciaById = async (req, res) => {
 module.exports = {
   createIncidencia,
   getIncidencias,
-  getIncidenciaById
+  getIncidenciaById,
 };
