@@ -44,11 +44,11 @@ const getIncidencias = async (req, res) => {
         i.viaje_id,
         i.descripcion,
         i.tipo,
-        i.latitud,
-        i.longitud,
         i.creado_en,
         c.nombre AS nombre_conductor,
-        u.nombre AS nombre_unidad,
+        c.apellido AS apellido_conductor,
+        u.numero_economico AS numero_unidad,
+        u.placas,
         v.hora_inicio,
         v.hora_fin
       FROM vallemolinostest.incidencias i
@@ -66,6 +66,7 @@ const getIncidencias = async (req, res) => {
   }
 };
 
+
 // Obtener una incidencia por ID
 const getIncidenciaById = async (req, res) => {
   try {
@@ -79,11 +80,11 @@ const getIncidenciaById = async (req, res) => {
         i.viaje_id,
         i.descripcion,
         i.tipo,
-        i.latitud,
-        i.longitud,
         i.creado_en,
         c.nombre AS nombre_conductor,
-        u.nombre AS nombre_unidad,
+        c.apellido AS apellido_conductor,
+        u.numero_economico AS numero_unidad,
+        u.placas,
         v.hora_inicio,
         v.hora_fin
       FROM vallemolinostest.incidencias i
@@ -105,6 +106,7 @@ const getIncidenciaById = async (req, res) => {
     res.status(500).json({ error: 'Error en el servidor' });
   }
 };
+
 
 module.exports = {
   createIncidencia,
