@@ -280,9 +280,9 @@ exports.updateViaje = async (req, res) => {
         const lon = parseFloat(longitud) || 0.0;
 
         const query = `
-          INSERT INTO bitacora_cupos 
-          (viaje_id, latitud, longitud, ascensos, descensos, fecha_hora, ubicacion)
-          VALUES ($1, $2, $3, $4, $5, NOW(), ST_SetSRID(ST_MakePoint($3, $2), 4326))
+          INSERT INTO vallemolinostest.bitacora_cupos 
+          (viaje_id, latitud, longitud, ascensos, descensos, fecha_hora)
+          VALUES ($1, $2, $3, $4, $5, NOW())
         `;
 
         await client.query(query, [id, lat, lon, ascensos, descensos]);

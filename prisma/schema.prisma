@@ -93,11 +93,11 @@ model viajes {
   pasajeros_actuales        Int?             @default(0)
   estado                    String?          @default("pendiente") @db.VarChar(20)
   creado_en                 DateTime?        @default(now()) @db.Timestamp(6)
+  bitacora_cupos            bitacora_cupos[] @relation("ViajeBitacoraCupos")
   incidencias               incidencias[]
   rutas                     rutas?           @relation(fields: [ruta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   unidades                  unidades?        @relation(fields: [unidad_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   vueltas                   vueltas[]
-  bitacora_cupos            bitacora_cupos[] @relation("ViajeBitacoraCupos")
 }
 
 model vueltas {
@@ -142,8 +142,8 @@ model bitacora_cupos {
   descensos     Int?        @default(0)
   fecha_hora    DateTime?   @default(now()) @db.Timestamp(6)
   fk_estaciones Int?
-  estaciones    estaciones? @relation(fields: [fk_estaciones], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_bitacora_estaciones")
   viajes        viajes      @relation("ViajeBitacoraCupos", fields: [viaje_id], references: [id], onDelete: Cascade)
+  estaciones    estaciones? @relation(fields: [fk_estaciones], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_bitacora_estaciones")
 }
 
 model estaciones {
@@ -154,16 +154,3 @@ model estaciones {
   ruta_asignada  String?          @db.VarChar(50)
   bitacora_cupos bitacora_cupos[]
 }
-
-// model estaciones_poligonos {
-//   gid         Int                      @id @default(autoincrement())
-//   id          Float?
-//   nombre      String?                  @db.VarChar(80)
-//   lat         String?                  @db.VarChar(11)
-//   lng         String?                  @db.VarChar(11)
-//   ruta_asig   String?                  @db.VarChar(30)
-//   fk_estacion Float?
-//   geom        Unsupported("geometry")?
-
-//   @@index([geom], type: Gist)
-// }
