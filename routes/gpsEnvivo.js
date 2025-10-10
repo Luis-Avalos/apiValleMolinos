@@ -42,7 +42,7 @@ async function obtenerVehiculosPorGrupo(groupId) {
     userName: GEOTAB_USER
   };
 
-  //  1. Obtener lista de dispositivos en el grupo
+  //  Obtener lista de dispositivos en el grupo
   const dispositivos = await axiosInstance.post(`${server}/apiv1`, {
     method: "Get",
     params: {
@@ -77,7 +77,8 @@ async function obtenerVehiculosPorGrupo(groupId) {
         x: matching.longitude,
         y: matching.latitude,
         speed: matching.speed,
-        dateTime: matching.dateTime
+        dateTime: matching.dateTime,
+        isdriving: matching.isdriving
       };
     }
     return null;
