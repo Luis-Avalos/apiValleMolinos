@@ -7,18 +7,18 @@ exports.getSubidasEstadisticas = async (req, res) => {
         
         const estatQuery = await prisma.$queryRaw`
                 SELECT 
-            e.id AS estacion_id,
-            e.nombre AS estacion,
-            e.ruta_asignada ,
-            bc.fecha_hora ,
-            SUM(bc.ascensos) AS total_ascensos,
-            SUM(bc.descensos) AS total_descensos
+                e.id AS estacion_id,
+                COALESCE(e.nombre, 'SIN ESTACION') AS estacion,
+                e.ruta_asignada,
+                bc.fecha_hora,
+                SUM(bc.ascensos) AS total_ascensos,
+                SUM(bc.descensos) AS total_descensos
             FROM bitacora_cupos bc
-            INNER JOIN estaciones e 
-            ON e.id = bc.fk_estaciones
-            WHERE e.ruta_asignada  IN ('VALLE','TESISTAN')
-            GROUP BY e.id, e.nombre,bc.fecha_hora ,  DATE(bc.fecha_hora)
-            ORDER BY e.nombre;
+            LEFT JOIN estaciones e
+                ON e.id = bc.fk_estaciones
+            WHERE e.ruta_asignada IN ('VALLE','TESISTAN') OR bc.fk_estaciones IS NULL
+            GROUP BY e.id, e.nombre, e.ruta_asignada, bc.fecha_hora, DATE(bc.fecha_hora)
+            ORDER BY estacion, fecha_hora;
         `;
         // Convertir posibles BigInt para serializar 
         const result = estatQuery.map(r => ({
