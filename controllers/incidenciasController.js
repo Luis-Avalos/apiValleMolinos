@@ -1,21 +1,32 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// Crear incidencia
+
+const { Pool } = require('pg');
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL, 
+});
+
 const createIncidencia = async (req, res) => {
   try {
-    const { conductor_id, unidad_id, viaje_id, descripcion, tipo } = req.body;
+    const { conductor_id, unidad_id, viaje_id, descripcion, tipo, latitud, longitud } = req.body;
 
     if (!conductor_id || !unidad_id || !descripcion) {
       return res.status(400).json({ error: 'Campos obligatorios: conductor_id, unidad_id, descripcion' });
     }
 
-    const incidencia = await prisma.incidencias.create({
-      data: { conductor_id, unidad_id, viaje_id, descripcion, tipo }
-    });
+    const query = `
+      INSERT INTO vallemolinostest.incidencias (conductor_id, unidad_id, viaje_id, descripcion, tipo, latitud, longitud, creado_en)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+      RETURNING *;
+    `;
 
-    // Emitir evento a todos los clientes conectados
-    req.app.get("io").emit("nueva_incidencia", incidencia);
+    const values = [conductor_id, unidad_id, viaje_id, descripcion, tipo, latitud, longitud];
+    const result = await pool.query(query, values);
+    const incidencia = result.rows[0];
+
+    // Emitir evento en tiempo real
+    req.app.get('io').emit('nueva_incidencia', incidencia);
 
     res.json(incidencia);
   } catch (error) {
@@ -25,7 +36,7 @@ const createIncidencia = async (req, res) => {
 };
 
 
-// Listar todas
+
 const getIncidencias = async (req, res) => {
   try {
     const incidencias = await prisma.incidencias.findMany({
@@ -43,7 +54,7 @@ const getIncidencias = async (req, res) => {
   }
 };
 
-// Obtener por ID
+
 const getIncidenciaById = async (req, res) => {
   try {
     const { id } = req.params;
