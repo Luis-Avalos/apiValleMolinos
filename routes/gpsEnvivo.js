@@ -30,9 +30,6 @@ async function authenticate() {
   return sessionId;
 }
 
-/**
- *  Función genérica para obtener vehículos por grupo
- */
 async function obtenerVehiculosPorGrupo(groupId) {
   if (!sessionId) await authenticate();
 
@@ -78,7 +75,7 @@ async function obtenerVehiculosPorGrupo(groupId) {
         y: matching.latitude,
         speed: matching.speed,
         dateTime: matching.dateTime,
-        isdriving: matching.isdriving
+        isDriving: matching.isDriving
       };
     }
     return null;
@@ -108,5 +105,64 @@ router.get('/geotab/vcamioncitozapopan', async (req, res) => {
     res.status(500).json({ error: "Error al obtener datos desde Geotab" });
   }
 });
+
+router.get('/geotab/vehiculo/:id', async (req, res) => {
+  const { id } = req.params; // ejemplo: b3B6
+
+  try {
+    if (!sessionId) await authenticate();
+
+    const creds = {
+      database: GEOTAB_DB,
+      sessionId: sessionId,
+      userName: GEOTAB_USER
+    };
+
+    // Obtener info del vehículo
+    const dispositivo = await axiosInstance.post(`${server}/apiv1`, {
+      method: "Get",
+      params: {
+        typeName: "Device",
+        search: { id }, 
+        credentials: creds
+      }
+    });
+
+    const vehiculo = dispositivo.data.result[0];
+    if (!vehiculo) return res.status(404).json({ error: "Vehículo no encontrado" });
+
+    // Obtener su estatus 
+    const status = await axiosInstance.post(`${server}/apiv1`, {
+      method: "Get",
+      params: {
+        typeName: "DeviceStatusInfo",
+        search: { deviceSearch: { id } },
+        credentials: creds
+      }
+    });
+
+    const statusData = status.data.result[0];
+
+    const data = {
+      id_dev: vehiculo.id,
+      nombre: vehiculo.name,
+      placas: vehiculo.licensePlate || "Sin placas",
+      identificador: vehiculo.vehicleIdentificationNumber || "Sin VIN",
+      grupo: vehiculo.groups,
+      x: statusData?.longitude || null,
+      y: statusData?.latitude || null,
+      speed: statusData?.speed || 0,
+      dateTime: statusData?.dateTime || null,
+      isDriving: statusData?.isDriving || false
+    };
+
+    res.json(data);
+
+  } catch (err) {
+    console.error("Error en /geotab/vehiculo/:id:", err.response?.data || err.message);
+    res.status(500).json({ error: "Error al obtener datos del vehículo desde Geotab" });
+  }
+});
+
 
 module.exports = router;

@@ -60,6 +60,7 @@ model unidades {
   estado           String?       @default("activo") @db.VarChar(20)
   conductor_id     Int?
   foto_url         String?
+  id_geotab        String?
   creado_en        DateTime?     @default(now()) @db.Timestamp(6)
   incidencias      incidencias[]
   conductores      conductores?  @relation(fields: [conductor_id], references: [id], onUpdate: NoAction)

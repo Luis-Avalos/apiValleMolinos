@@ -62,7 +62,7 @@ exports.createUnidad = [
   upload.any(),
   async (req, res) => {
     try {
-      const { numero_economico, placas, capacidad, estado, conductor_id } = req.body;
+      const { numero_economico, placas, capacidad, estado, conductor_id, id_geotab } = req.body;
 
       let fotoUrl = null;
 
@@ -77,6 +77,7 @@ exports.createUnidad = [
           capacidad: capacidad ? Number(capacidad) : null, 
           estado, 
           conductor_id: conductor_id ? Number(conductor_id) : null,
+          id_geotab,
           foto_url: fotoUrl
         }
       });
@@ -94,7 +95,7 @@ exports.updateUnidad = [
   upload.any(),
   async (req, res) => {
     try {
-      const { numero_economico, placas, capacidad, estado, conductor_id } = req.body;
+      const { numero_economico, placas, capacidad, estado, conductor_id, id_geotab } = req.body;
 
       const dataToUpdate = {};
       if (numero_economico) dataToUpdate.numero_economico = numero_economico;
@@ -102,6 +103,7 @@ exports.updateUnidad = [
       if (capacidad) dataToUpdate.capacidad = Number(capacidad);
       if (estado) dataToUpdate.estado = estado;
       if (conductor_id !== undefined) dataToUpdate.conductor_id = Number(conductor_id);
+      if (id_geotab) dataToUpdate.id_geotab = id_geotab;
 
       if (req.files && req.files.length > 0) {
         //foto
