@@ -2,7 +2,6 @@ const prisma = require('../models/userModel');
 const bcrypt = require('bcrypt');
 const AWS = require('aws-sdk');
 const multer = require('multer');
-const sharp = require('sharp');
 
 // --- Configuración de Multer (archivos en memoria)
 const storage = multer.memoryStorage();
@@ -12,19 +11,15 @@ const upload = multer({ storage });
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  endpoint: new AWS.Endpoint(process.env.AWS_URL),
+  endpoint: process.env.AWS_URL, // ✅ sin new AWS.Endpoint()
   s3ForcePathStyle: true,
+  signatureVersion: 'v4',
 });
 
 // --- Función auxiliar para subir a S3
 async function subirAS3(file, userId, folder = 'ciudadanos') {
-  const safeName = file.originalname
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, '_')
-    .replace(/[^a-zA-Z0-9_.-]/g, '');
-
-  const fileName = `vmprofile/${folder}/${userId}/${Date.now()}-${safeName}`;
+  // ✅ agrega carpeta base del bucket (publicfilespruebas/)
+  const fileName = `${process.env.AWS_FOLDER}${folder}/${userId}/${Date.now()}-${file.originalname}`;
 
   const params = {
     Bucket: process.env.AWS_BUCKET,
@@ -34,8 +29,14 @@ async function subirAS3(file, userId, folder = 'ciudadanos') {
     ACL: 'public-read',
   };
 
-  const uploadResult = await s3.upload(params).promise();
-  return uploadResult.Location; // URL pública
+  try {
+    const uploadResult = await s3.upload(params).promise();
+    console.log('✅ Subida a S3 exitosa:', uploadResult.Location);
+    return uploadResult.Location;
+  } catch (err) {
+    console.error('❌ Error al subir a S3:', err);
+    throw err;
+  }
 }
 
 // --- Obtener todos los ciudadanos
@@ -68,19 +69,16 @@ exports.createCiudadano = [
   upload.any(),
   async (req, res) => {
     try {
-      const { nombre, apellido, curp, email, telefono, password_hash } = req.body;
+      const { nombre, apellido, curp, email, telefono, password } = req.body;
 
-      // Validar correo único
       const existing = await prisma.usuarios_ciudadanos.findUnique({ where: { email } });
       if (existing) return res.status(400).json({ error: 'El correo ya está registrado' });
 
-      // Hashear contraseña
-      const hashed = await bcrypt.hash(password_hash, 10);
+      const hashed = await bcrypt.hash(password, 10);
 
-      // Subir foto si se envía
-       let fotoUrl = null;
+      let fotoUrl = null;
       if (req.files && req.files.length > 0) {
-        fotoUrl = await subirAS3(req.files[0], email, 'conductores');
+        fotoUrl = await subirAS3(req.files[0], email, 'ciudadanos');
       }
 
       const nuevo = await prisma.usuarios_ciudadanos.create({
@@ -109,7 +107,7 @@ exports.updateCiudadano = [
   upload.any(),
   async (req, res) => {
     try {
-      const { nombre, apellido, curp, email, telefono, password_hash } = req.body;
+      const { nombre, apellido, curp, email, telefono, password } = req.body;
 
       const dataToUpdate = {};
       if (nombre) dataToUpdate.nombre = nombre;
@@ -118,14 +116,12 @@ exports.updateCiudadano = [
       if (email) dataToUpdate.email = email;
       if (telefono) dataToUpdate.telefono = telefono;
 
-      // Si viene nueva contraseña
-      if (password_hash) {
-        const hashed = await bcrypt.hash(password_hash, 10);
+      if (password) {
+        const hashed = await bcrypt.hash(password, 10);
         dataToUpdate.password_hash = hashed;
       }
 
-      // Si viene archivo
-     if (req.files && req.files.length > 0) {
+      if (req.files && req.files.length > 0) {
         const fotoUrl = await subirAS3(req.files[0], req.params.id, 'ciudadanos');
         dataToUpdate.foto_perfil_url = fotoUrl;
       }
@@ -145,14 +141,14 @@ exports.updateCiudadano = [
 
 // --- Solo actualizar foto de perfil
 exports.uploadFotoPerfilCiudadano = [
- upload.any(),
+  upload.any(),
   async (req, res) => {
     try {
       if (!req.files || req.files.length === 0)
         return res.status(400).json({ error: 'No se envió ninguna imagen' });
 
       const file = req.files[0];
-      const fotoUrl = await subirAS3(file, req.params.id);
+      const fotoUrl = await subirAS3(file, req.params.id, 'ciudadanos');
 
       const ciudadano = await prisma.usuarios_ciudadanos.update({
         where: { id: Number(req.params.id) },
