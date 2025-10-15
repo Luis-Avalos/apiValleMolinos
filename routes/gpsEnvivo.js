@@ -50,7 +50,6 @@ async function obtenerVehiculosPorGrupo(groupId) {
   });
 
   const listaDispositivos = dispositivos.data.result;
-
   
   const status = await axiosInstance.post(`${server}/apiv1`, {
     method: "Get",
@@ -83,7 +82,6 @@ async function obtenerVehiculosPorGrupo(groupId) {
 
   return coordenadas;
 }
-
 
 router.get('/geotab/vehiculos', async (req, res) => {
   try {
