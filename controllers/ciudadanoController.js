@@ -69,12 +69,17 @@ exports.createCiudadano = [
   upload.any(),
   async (req, res) => {
     try {
-      const { nombre, apellido, curp, email, telefono, password } = req.body;
+      const { nombre, apellido, curp, email, telefono, password, password_hash } = req.body;
+      const plainPassword = password || password_hash;
+
+      if (!plainPassword) {
+        return res.status(400).json({ error: 'La contraseña es requerida' });
+      }
 
       const existing = await prisma.usuarios_ciudadanos.findUnique({ where: { email } });
       if (existing) return res.status(400).json({ error: 'El correo ya está registrado' });
 
-      const hashed = await bcrypt.hash(password, 10);
+      const hashed = await bcrypt.hash(plainPassword, 10);
 
       let fotoUrl = null;
       if (req.files && req.files.length > 0) {
