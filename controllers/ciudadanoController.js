@@ -3,18 +3,10 @@ const bcrypt = require('bcrypt');
 const AWS = require('aws-sdk');
 const multer = require('multer');
 const sharp = require('sharp');
-const path = require('path');
 
 // --- Configuración de Multer (archivos en memoria)
 const storage = multer.memoryStorage();
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) cb(null, true);
-    else cb(new Error('Solo se permiten imágenes'));
-  },
-}).single('file'); // solo un archivo, clave "file"
+const upload = multer({ storage });
 
 // --- Configuración AWS S3
 const s3 = new AWS.S3({
@@ -25,22 +17,20 @@ const s3 = new AWS.S3({
 });
 
 // --- Función auxiliar para subir a S3
-async function subirAS3(fileBuffer, userId, originalName, mimetype) {
-  // Normalizar nombre: quitar espacios y caracteres especiales
-  const safeName = originalName
-    .normalize('NFD') // separa acentos
-    .replace(/[\u0300-\u036f]/g, '') // quita acentos
-    .replace(/\s+/g, '_') // reemplaza espacios
-    .replace(/[^a-zA-Z0-9_-]/g, ''); // quita caracteres raros
+async function subirAS3(file, userId, folder = 'ciudadanos') {
+  const safeName = file.originalname
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, '_')
+    .replace(/[^a-zA-Z0-9_.-]/g, '');
 
-  const extension = path.extname(originalName) || '.jpg';
-  const fileName = `vmprofile/${userId}/${Date.now()}-${safeName}${extension}`;
+  const fileName = `vmprofile/${folder}/${userId}/${Date.now()}-${safeName}`;
 
   const params = {
     Bucket: process.env.AWS_BUCKET,
     Key: fileName,
-    Body: fileBuffer,
-    ContentType: mimetype,
+    Body: file.buffer,
+    ContentType: file.mimetype,
     ACL: 'public-read',
   };
 
@@ -51,9 +41,10 @@ async function subirAS3(fileBuffer, userId, originalName, mimetype) {
 // --- Obtener todos los ciudadanos
 exports.getAllCiudadanos = async (req, res) => {
   try {
-    const ciudadanos = await prisma.usuarios_ciudadanos.findMany({});
+    const ciudadanos = await prisma.usuarios_ciudadanos.findMany();
     res.json(ciudadanos);
   } catch (error) {
+    console.error('Error en getAllCiudadanos:', error);
     res.status(500).json({ error: 'Error al obtener ciudadanos', details: error.message });
   }
 };
@@ -67,47 +58,59 @@ exports.getCiudadanoById = async (req, res) => {
     if (!ciudadano) return res.status(404).json({ error: 'Ciudadano no encontrado' });
     res.json(ciudadano);
   } catch (error) {
+    console.error('Error en getCiudadanoById:', error);
     res.status(500).json({ error: 'Error al obtener ciudadano', details: error.message });
   }
 };
 
 // --- Crear ciudadano
 exports.createCiudadano = [
-  upload,
+  upload.any(),
   async (req, res) => {
     try {
       const { nombre, apellido, curp, email, telefono, password_hash } = req.body;
 
-      // Validar email único
+      // Validar correo único
       const existing = await prisma.usuarios_ciudadanos.findUnique({ where: { email } });
       if (existing) return res.status(400).json({ error: 'El correo ya está registrado' });
 
-      // Hashear password
+      // Hashear contraseña
       const hashed = await bcrypt.hash(password_hash, 10);
 
-      // Crear registro
-      const nuevo = await prisma.usuarios_ciudadanos.create({
-        data: { nombre, apellido, curp, email, telefono, password_hash: hashed }
-      });
-
+      // Subir foto si se envía
       let fotoUrl = null;
-      if (req.file) {
-        // Resize con Sharp
-        const resizedBuffer = await sharp(req.file.buffer)
+      if (req.files && req.files.length > 0) {
+        const resizedBuffer = await sharp(req.files[0].buffer)
           .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
           .toFormat('jpeg')
           .toBuffer();
 
-        fotoUrl = await subirAS3(resizedBuffer, nuevo.id, req.file.originalname, req.file.mimetype);
+        const fileToUpload = {
+          buffer: resizedBuffer,
+          originalname: req.files[0].originalname,
+          mimetype: 'image/jpeg',
+        };
 
-        await prisma.usuarios_ciudadanos.update({
-          where: { id: nuevo.id },
-          data: { foto_perfil_url: fotoUrl }
-        });
+        // Subir temporalmente con el email (antes de tener el ID)
+        fotoUrl = await subirAS3(fileToUpload, email, 'ciudadanos');
       }
 
-      res.status(201).json({ ...nuevo, foto_perfil_url: fotoUrl });
+      const nuevo = await prisma.usuarios_ciudadanos.create({
+        data: {
+          nombre,
+          apellido,
+          curp,
+          email,
+          telefono,
+          password_hash: hashed,
+          rol: 'ciudadano',
+          foto_perfil_url: fotoUrl,
+        },
+      });
+
+      res.status(201).json(nuevo);
     } catch (error) {
+      console.error('Error en createCiudadano:', error);
       res.status(500).json({ error: 'Error al crear ciudadano', details: error.message });
     }
   },
@@ -115,29 +118,38 @@ exports.createCiudadano = [
 
 // --- Actualizar ciudadano
 exports.updateCiudadano = [
-  upload,
+  upload.any(),
   async (req, res) => {
     try {
       const { nombre, apellido, curp, email, telefono, password_hash } = req.body;
-      const dataToUpdate = {};
 
+      const dataToUpdate = {};
       if (nombre) dataToUpdate.nombre = nombre;
       if (apellido) dataToUpdate.apellido = apellido;
       if (curp) dataToUpdate.curp = curp;
       if (email) dataToUpdate.email = email;
       if (telefono) dataToUpdate.telefono = telefono;
+
+      // Si viene nueva contraseña
       if (password_hash) {
         const hashed = await bcrypt.hash(password_hash, 10);
         dataToUpdate.password_hash = hashed;
       }
 
-      if (req.file) {
-        const resizedBuffer = await sharp(req.file.buffer)
+      // Si viene archivo
+      if (req.files && req.files.length > 0) {
+        const resizedBuffer = await sharp(req.files[0].buffer)
           .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
           .toFormat('jpeg')
           .toBuffer();
 
-        const fotoUrl = await subirAS3(resizedBuffer, req.params.id, req.file.originalname, req.file.mimetype);
+        const fileToUpload = {
+          buffer: resizedBuffer,
+          originalname: req.files[0].originalname,
+          mimetype: 'image/jpeg',
+        };
+
+        const fotoUrl = await subirAS3(fileToUpload, req.params.id, 'ciudadanos');
         dataToUpdate.foto_perfil_url = fotoUrl;
       }
 
@@ -148,47 +160,45 @@ exports.updateCiudadano = [
 
       res.json(ciudadano);
     } catch (error) {
+      console.error('Error en updateCiudadano:', error);
       res.status(500).json({ error: 'Error al actualizar ciudadano', details: error.message });
     }
   },
 ];
 
-// --- Subir solo foto de perfil
-exports.uploadFotoPerfil = async (req, res) => {
-  upload(req, res, async function (err) {
-    if (err) {
-      return res.status(400).json({ error: err.message });
-    }
-
+// --- Solo actualizar foto de perfil
+exports.uploadFotoPerfilCiudadano = [
+  upload.any(),
+  async (req, res) => {
     try {
-      if (!req.file) {
+      if (!req.files || req.files.length === 0)
         return res.status(400).json({ error: 'No se envió ninguna imagen' });
-      }
 
-      const { buffer, originalname, mimetype } = req.file;
-
-      // --- Resize con Sharp
-      const resizedBuffer = await sharp(buffer)
+      const resizedBuffer = await sharp(req.files[0].buffer)
         .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
         .toFormat('jpeg')
         .toBuffer();
 
-      // --- Subir a S3
-      const url = await subirAS3(resizedBuffer, req.params.id, originalname, mimetype);
+      const fileToUpload = {
+        buffer: resizedBuffer,
+        originalname: req.files[0].originalname,
+        mimetype: 'image/jpeg',
+      };
 
-      // --- Actualizar en Prisma
+      const fotoUrl = await subirAS3(fileToUpload, req.params.id, 'ciudadanos');
+
       const ciudadano = await prisma.usuarios_ciudadanos.update({
         where: { id: Number(req.params.id) },
-        data: { foto_perfil_url: url },
+        data: { foto_perfil_url: fotoUrl },
       });
 
       res.json({ message: 'Foto actualizada', foto_perfil_url: ciudadano.foto_perfil_url });
-    } catch (error) {
-      console.error('Error en uploadFotoPerfil:', error);
-      res.status(500).json({ error: 'Error subiendo foto', details: error.message });
+    } catch (err) {
+      console.error('Error en uploadFotoPerfilCiudadano:', err);
+      res.status(500).json({ error: 'Error subiendo foto', details: err.message });
     }
-  });
-};
+  },
+];
 
 // --- Eliminar ciudadano
 exports.deleteCiudadano = async (req, res) => {
@@ -198,6 +208,7 @@ exports.deleteCiudadano = async (req, res) => {
     });
     res.json({ message: 'Ciudadano eliminado' });
   } catch (error) {
+    console.error('Error en deleteCiudadano:', error);
     res.status(500).json({ error: 'Error al eliminar ciudadano', details: error.message });
   }
 };
