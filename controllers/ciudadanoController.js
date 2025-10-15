@@ -78,21 +78,9 @@ exports.createCiudadano = [
       const hashed = await bcrypt.hash(password_hash, 10);
 
       // Subir foto si se envía
-      let fotoUrl = null;
+       let fotoUrl = null;
       if (req.files && req.files.length > 0) {
-        const resizedBuffer = await sharp(req.files[0].buffer)
-          .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
-          .toFormat('jpeg')
-          .toBuffer();
-
-        const fileToUpload = {
-          buffer: resizedBuffer,
-          originalname: req.files[0].originalname,
-          mimetype: 'image/jpeg',
-        };
-
-        // Subir temporalmente con el email (antes de tener el ID)
-        fotoUrl = await subirAS3(fileToUpload, email, 'ciudadanos');
+        fotoUrl = await subirAS3(req.files[0], email, 'conductores');
       }
 
       const nuevo = await prisma.usuarios_ciudadanos.create({
@@ -137,19 +125,8 @@ exports.updateCiudadano = [
       }
 
       // Si viene archivo
-      if (req.files && req.files.length > 0) {
-        const resizedBuffer = await sharp(req.files[0].buffer)
-          .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
-          .toFormat('jpeg')
-          .toBuffer();
-
-        const fileToUpload = {
-          buffer: resizedBuffer,
-          originalname: req.files[0].originalname,
-          mimetype: 'image/jpeg',
-        };
-
-        const fotoUrl = await subirAS3(fileToUpload, req.params.id, 'ciudadanos');
+     if (req.files && req.files.length > 0) {
+        const fotoUrl = await subirAS3(req.files[0], req.params.id, 'ciudadanos');
         dataToUpdate.foto_perfil_url = fotoUrl;
       }
 
@@ -168,24 +145,14 @@ exports.updateCiudadano = [
 
 // --- Solo actualizar foto de perfil
 exports.uploadFotoPerfilCiudadano = [
-  upload.any(),
+ upload.any(),
   async (req, res) => {
     try {
       if (!req.files || req.files.length === 0)
         return res.status(400).json({ error: 'No se envió ninguna imagen' });
 
-      const resizedBuffer = await sharp(req.files[0].buffer)
-        .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
-        .toFormat('jpeg')
-        .toBuffer();
-
-      const fileToUpload = {
-        buffer: resizedBuffer,
-        originalname: req.files[0].originalname,
-        mimetype: 'image/jpeg',
-      };
-
-      const fotoUrl = await subirAS3(fileToUpload, req.params.id, 'ciudadanos');
+      const file = req.files[0];
+      const fotoUrl = await subirAS3(file, req.params.id);
 
       const ciudadano = await prisma.usuarios_ciudadanos.update({
         where: { id: Number(req.params.id) },
