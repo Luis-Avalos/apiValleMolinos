@@ -83,10 +83,13 @@ exports.createCiudadano = [
       const existing = await prisma.usuarios_ciudadanos.findUnique({ where: { email } });
       if (existing) return res.status(400).json({ error: 'El correo ya está registrado' });
 
-      // Hashear contraseña
+      if (!password) {
+        console.error(" No se la contraseña en el body");
+        return res.status(400).json({ error: "La contraseña es requerida" });
+      }
+
       const hashed = await bcrypt.hash(password, 10);
 
-      // Variables para URLs
       let fotoUrl = null;
       let cartaUrl = null;
 
