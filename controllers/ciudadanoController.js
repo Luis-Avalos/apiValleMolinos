@@ -1,25 +1,24 @@
 const prisma = require('../models/userModel');
 const bcrypt = require('bcrypt');
-const AWS = require('aws-sdk');
-const multer = require('multer');
 
-// --- Configuración de Multer (archivos en memoria)
+const multer = require('multer');
+const AWS = require('aws-sdk');
+
+// Configuración de Multer (archivos en memoria)
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// --- Configuración AWS S3
+// Configuración de AWS S3
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  endpoint: process.env.AWS_URL, // ✅ sin new AWS.Endpoint()
+  endpoint: new AWS.Endpoint(process.env.AWS_URL),
   s3ForcePathStyle: true,
-  signatureVersion: 'v4',
 });
 
-// --- Función auxiliar para subir a S3
+// Función auxiliar para subir a S3
 async function subirAS3(file, userId, folder = 'ciudadanos') {
-  // ✅ agrega carpeta base del bucket (publicfilespruebas/)
-  const fileName = `${process.env.AWS_FOLDER}${folder}/${userId}/${Date.now()}-${file.originalname}`;
+  const fileName = `vmprofile/${folder}/${userId}/${file.originalname}`;
 
   const params = {
     Bucket: process.env.AWS_BUCKET,
@@ -29,15 +28,10 @@ async function subirAS3(file, userId, folder = 'ciudadanos') {
     ACL: 'public-read',
   };
 
-  try {
-    const uploadResult = await s3.upload(params).promise();
-    console.log('✅ Subida a S3 exitosa:', uploadResult.Location);
-    return uploadResult.Location;
-  } catch (err) {
-    console.error('❌ Error al subir a S3:', err);
-    throw err;
-  }
+  const uploadResult = await s3.upload(params).promise();
+  return uploadResult.Location; // URL pública
 }
+
 
 // --- Obtener todos los ciudadanos
 exports.getAllCiudadanos = async (req, res) => {
@@ -65,47 +59,89 @@ exports.getCiudadanoById = async (req, res) => {
 };
 
 // --- Crear ciudadano
+// exports.createCiudadano = [
+//   upload.any(),
+//   async (req, res) => {
+//     try {
+//       const { nombre, apellido, curp, email, telefono, password, password_hash } = req.body;
+//       const plainPassword = password || password_hash;
+
+//       if (!plainPassword) {
+//         return res.status(400).json({ error: 'La contraseña es requerida' });
+//       }
+
+//       const existing = await prisma.usuarios_ciudadanos.findUnique({ where: { email } });
+//       if (existing) return res.status(400).json({ error: 'El correo ya está registrado' });
+
+//       const hashed = await bcrypt.hash(plainPassword, 10);
+
+//       let fotoUrl = null;
+//       if (req.files && req.files.length > 0) {
+//         fotoUrl = await subirAS3(req.files[0], email, 'ciudadanos');
+//       }
+
+//       const nuevo = await prisma.usuarios_ciudadanos.create({
+//         data: {
+//           nombre,
+//           apellido,
+//           curp,
+//           email,
+//           telefono,
+//           password_hash: hashed,
+//           rol: 'ciudadano',
+//           foto_perfil_url: fotoUrl,
+//         },
+//       });
+
+//       res.status(201).json(nuevo);
+//     } catch (error) {
+//       console.error('Error en createCiudadano:', error);
+//       res.status(500).json({ error: 'Error al crear ciudadano', details: error.message });
+//     }
+//   },
+// ];
+
+
 exports.createCiudadano = [
   upload.any(),
   async (req, res) => {
     try {
-      const { nombre, apellido, curp, email, telefono, password, password_hash } = req.body;
-      const plainPassword = password || password_hash;
+      const { nombre, apellido, curp, email, telefono, password } = req.body;
 
-      if (!plainPassword) {
-        return res.status(400).json({ error: 'La contraseña es requerida' });
-      }
-
+      // Validar email único
       const existing = await prisma.usuarios_ciudadanos.findUnique({ where: { email } });
       if (existing) return res.status(400).json({ error: 'El correo ya está registrado' });
 
-      const hashed = await bcrypt.hash(plainPassword, 10);
+      // Hashear password
+      const hashed = await bcrypt.hash(password, 10);
 
+      // Subir foto si viene
       let fotoUrl = null;
       if (req.files && req.files.length > 0) {
-        fotoUrl = await subirAS3(req.files[0], email, 'ciudadanos');
+        fotoUrl = await subirAS3(req.files[0], email, 'usuarios_ciudadanos');
       }
 
       const nuevo = await prisma.usuarios_ciudadanos.create({
-        data: {
-          nombre,
-          apellido,
-          curp,
-          email,
-          telefono,
+        data: { 
+          nombre, 
+          apellido, 
+          curp, 
+          email, 
+          telefono, 
           password_hash: hashed,
-          rol: 'ciudadano',
-          foto_perfil_url: fotoUrl,
-        },
+          rol : "ciudadano", 
+          foto_perfil_url: fotoUrl
+        }
       });
 
       res.status(201).json(nuevo);
     } catch (error) {
-      console.error('Error en createCiudadano:', error);
-      res.status(500).json({ error: 'Error al crear ciudadano', details: error.message });
+      console.error("Error en createConductor:", error);
+      res.status(500).json({ error: 'Error al crear conductor', details: error.message });
     }
-  },
+  }
 ];
+
 
 // --- Actualizar ciudadano
 exports.updateCiudadano = [
