@@ -60,25 +60,30 @@ model unidades {
   estado           String?       @default("activo") @db.VarChar(20)
   conductor_id     Int?
   foto_url         String?
-  id_geotab        String?
   creado_en        DateTime?     @default(now()) @db.Timestamp(6)
+  id_geotab        String?       @db.VarChar(50)
   incidencias      incidencias[]
   conductores      conductores?  @relation(fields: [conductor_id], references: [id], onUpdate: NoAction)
   viajes           viajes[]
 }
 
 model usuarios_ciudadanos {
-  id              Int              @id @default(autoincrement())
-  nombre          String           @db.VarChar(100)
-  apellido        String           @db.VarChar(100)
-  curp            String           @unique @db.VarChar(18)
-  email           String           @unique @db.VarChar(150)
-  telefono        String?          @unique @db.VarChar(15)
-  password_hash   String
-  foto_perfil_url String?
-  fecha_registro  DateTime?        @default(now()) @db.Timestamp(6)
-  rol             String?          @db.VarChar
-  notificaciones  notificaciones[]
+  id                  Int              @id @default(autoincrement())
+  nombre              String           @db.VarChar(100)
+  apellido            String           @db.VarChar(100)
+  curp                String           @unique @db.VarChar(18)
+  email               String           @unique @db.VarChar(150)
+  telefono            String?          @unique @db.VarChar(15)
+  password_hash       String
+  foto_perfil_url     String?
+  fecha_registro      DateTime?        @default(now()) @db.Timestamp(6)
+  rol                 String?          @db.VarChar
+  telefono_emergencia String?          @db.VarChar(50)
+  domicilio           String?
+  edad                Int?
+  carta_anuencia_url  String?
+  updated_at          DateTime?        @default(now()) @db.Timestamp(6)
+  notificaciones      notificaciones[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -129,6 +134,8 @@ model incidencias {
   descripcion  String
   tipo         String?     @db.VarChar(50)
   creado_en    DateTime?   @default(now()) @db.Timestamp(6)
+  latitud      Float?
+  longitud     Float?
   conductores  conductores @relation(fields: [conductor_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_incidencia_conductor")
   unidades     unidades    @relation(fields: [unidad_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_incidencia_unidad")
   viajes       viajes?     @relation(fields: [viaje_id], references: [id], onUpdate: NoAction, map: "fk_incidencia_viaje")
@@ -154,4 +161,31 @@ model estaciones {
   lng            Decimal?         @db.Decimal(10, 6)
   ruta_asignada  String?          @db.VarChar(50)
   bitacora_cupos bitacora_cupos[]
+}
+
+model estaciones_poligonos {
+  id          Int                      @id @default(autoincrement())
+  fk_estacion Int?
+  geom        Unsupported("geometry")?
+}
+
+model estaciones_poligonos_export {
+  gid     Int                      @id @default(autoincrement())
+  name    String?                  @db.VarChar(254)
+  nombre  String?                  @db.VarChar(100)
+  ruta    String?                  @db.VarChar(50)
+  ida     Boolean?
+  regreso Boolean?
+  geom    Unsupported("geometry")?
+
+  @@index([geom], type: Gist)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model rutas_trazo {
+  gid    Int                      @id @default(autoincrement())
+  geom   Unsupported("geometry")?
+  nombre String?                  @db.VarChar(254)
+
+  @@index([geom], map: "sidx_rutas_trazo_geom", type: Gist)
 }

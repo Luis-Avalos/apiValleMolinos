@@ -16,20 +16,22 @@ const s3 = new AWS.S3({
   s3ForcePathStyle: true,
 });
 
-// Función auxiliar para subir a S3
-async function subirAS3(file, userId, folder = 'ciudadanos') {
-  const fileName = `vmprofile/${folder}/${userId}/${file.originalname}`;
+// Función  para subir a S3
+async function subirAS3(file, email) {
+  const key = `${process.env.AWS_FOLDER}/usuarios_ciudadanos/${email}/${file.originalname}`;
 
   const params = {
     Bucket: process.env.AWS_BUCKET,
-    Key: fileName,
+    Key: key,
     Body: file.buffer,
     ContentType: file.mimetype,
     ACL: 'public-read',
   };
 
-  const uploadResult = await s3.upload(params).promise();
-  return uploadResult.Location; // URL pública
+  const result = await s3.upload(params).promise();
+
+  // URL final accesible públicamente
+  return `${process.env.AWS_URL}/${process.env.AWS_BUCKET}/${key}`;
 }
 
 
@@ -58,86 +60,69 @@ exports.getCiudadanoById = async (req, res) => {
   }
 };
 
-// --- Crear ciudadano
-// exports.createCiudadano = [
-//   upload.any(),
-//   async (req, res) => {
-//     try {
-//       const { nombre, apellido, curp, email, telefono, password, password_hash } = req.body;
-//       const plainPassword = password || password_hash;
-
-//       if (!plainPassword) {
-//         return res.status(400).json({ error: 'La contraseña es requerida' });
-//       }
-
-//       const existing = await prisma.usuarios_ciudadanos.findUnique({ where: { email } });
-//       if (existing) return res.status(400).json({ error: 'El correo ya está registrado' });
-
-//       const hashed = await bcrypt.hash(plainPassword, 10);
-
-//       let fotoUrl = null;
-//       if (req.files && req.files.length > 0) {
-//         fotoUrl = await subirAS3(req.files[0], email, 'ciudadanos');
-//       }
-
-//       const nuevo = await prisma.usuarios_ciudadanos.create({
-//         data: {
-//           nombre,
-//           apellido,
-//           curp,
-//           email,
-//           telefono,
-//           password_hash: hashed,
-//           rol: 'ciudadano',
-//           foto_perfil_url: fotoUrl,
-//         },
-//       });
-
-//       res.status(201).json(nuevo);
-//     } catch (error) {
-//       console.error('Error en createCiudadano:', error);
-//       res.status(500).json({ error: 'Error al crear ciudadano', details: error.message });
-//     }
-//   },
-// ];
-
 
 exports.createCiudadano = [
   upload.any(),
   async (req, res) => {
     try {
-      const { nombre, apellido, curp, email, telefono, password } = req.body;
+      const {
+        nombre,
+        apellido,
+        curp,
+        email,
+        telefono,
+        password,
+        telefono_emergencia,
+        domicilio,
+        edad
+      } = req.body;
 
-      // Validar email único
+      console.log("BODY:", req.body);
+
+      //  email único
       const existing = await prisma.usuarios_ciudadanos.findUnique({ where: { email } });
       if (existing) return res.status(400).json({ error: 'El correo ya está registrado' });
 
-      // Hashear password
+      // Hashear contraseña
       const hashed = await bcrypt.hash(password, 10);
 
-      // Subir foto si viene
+      // Variables para URLs
       let fotoUrl = null;
+      let cartaUrl = null;
+
+      // Subir archivos (foto + carta)
       if (req.files && req.files.length > 0) {
-        fotoUrl = await subirAS3(req.files[0], email, 'usuarios_ciudadanos');
+        for (const file of req.files) {
+          if (file.fieldname === "foto_perfil") {
+            fotoUrl = await subirAS3(file, email);
+          } else if (file.fieldname === "carta_anuencia") {
+            cartaUrl = await subirAS3(file, email);
+          }
+        }
       }
 
+      // registro en la base de datos
       const nuevo = await prisma.usuarios_ciudadanos.create({
-        data: { 
-          nombre, 
-          apellido, 
-          curp, 
-          email, 
-          telefono, 
+        data: {
+          nombre,
+          apellido,
+          curp,
+          email,
+          telefono,
+          telefono_emergencia,
+          domicilio,
+          edad: edad ? parseInt(edad) : null,
           password_hash: hashed,
-          rol : "ciudadano", 
-          foto_perfil_url: fotoUrl
+          rol: "ciudadano",
+          foto_perfil_url: fotoUrl,
+          carta_anuencia_url: cartaUrl
         }
       });
 
       res.status(201).json(nuevo);
     } catch (error) {
-      console.error("Error en createConductor:", error);
-      res.status(500).json({ error: 'Error al crear conductor', details: error.message });
+      console.error("Error en createCiudadano:", error);
+      res.status(500).json({ error: 'Error al crear ciudadano', details: error.message });
     }
   }
 ];
@@ -148,36 +133,57 @@ exports.updateCiudadano = [
   upload.any(),
   async (req, res) => {
     try {
-      const { nombre, apellido, curp, email, telefono, password } = req.body;
+      const id = Number(req.params.id);
+      const ciudadano = await prisma.usuarios_ciudadanos.findUnique({ where: { id } });
+      if (!ciudadano) return res.status(404).json({ error: "Ciudadano no encontrado" });
+
+      const {
+        nombre,
+        apellido,
+        curp,
+        email,
+        telefono,
+        password,
+        telefono_emergencia,
+        domicilio,
+        edad
+      } = req.body;
 
       const dataToUpdate = {};
+
       if (nombre) dataToUpdate.nombre = nombre;
       if (apellido) dataToUpdate.apellido = apellido;
       if (curp) dataToUpdate.curp = curp;
       if (email) dataToUpdate.email = email;
       if (telefono) dataToUpdate.telefono = telefono;
+      if (telefono_emergencia) dataToUpdate.telefono_emergencia = telefono_emergencia;
+      if (domicilio) dataToUpdate.domicilio = domicilio;
+      if (edad) dataToUpdate.edad = parseInt(edad);
+      if (password) dataToUpdate.password_hash = await bcrypt.hash(password, 10);
 
-      if (password) {
-        const hashed = await bcrypt.hash(password, 10);
-        dataToUpdate.password_hash = hashed;
-      }
-
+      // Archivos (foto y carta)
       if (req.files && req.files.length > 0) {
-        const fotoUrl = await subirAS3(req.files[0], req.params.id, 'ciudadanos');
-        dataToUpdate.foto_perfil_url = fotoUrl;
+        for (const file of req.files) {
+          if (file.fieldname === "foto_perfil") {
+            dataToUpdate.foto_perfil_url = await subirAS3(file, email || ciudadano.email);
+          } else if (file.fieldname === "carta_anuencia") {
+            dataToUpdate.carta_anuencia_url = await subirAS3(file, email || ciudadano.email);
+          }
+        }
       }
 
-      const ciudadano = await prisma.usuarios_ciudadanos.update({
-        where: { id: Number(req.params.id) },
+      const actualizado = await prisma.usuarios_ciudadanos.update({
+        where: { id },
         data: dataToUpdate,
       });
 
-      res.json(ciudadano);
+      // Devolver datos actualizados
+      res.json(actualizado);
     } catch (error) {
-      console.error('Error en updateCiudadano:', error);
-      res.status(500).json({ error: 'Error al actualizar ciudadano', details: error.message });
+      console.error("Error en updateCiudadano:", error);
+      res.status(500).json({ error: "Error al actualizar ciudadano", details: error.message });
     }
-  },
+  }
 ];
 
 // --- Solo actualizar foto de perfil
