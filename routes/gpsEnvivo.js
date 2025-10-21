@@ -1,7 +1,11 @@
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const https = require('https');
+
 
 const axiosInstance = axios.create({
   httpsAgent: new https.Agent({ rejectUnauthorized: false })
@@ -30,6 +34,59 @@ async function authenticate() {
   return sessionId;
 }
 
+// async function obtenerVehiculosPorGrupo(groupId) {
+//   if (!sessionId) await authenticate();
+
+//   const creds = {
+//     database: GEOTAB_DB,
+//     sessionId: sessionId,
+//     userName: GEOTAB_USER
+//   };
+
+//   //  Obtener lista de dispositivos en el grupo
+//   const dispositivos = await axiosInstance.post(`${server}/apiv1`, {
+//     method: "Get",
+//     params: {
+//       typeName: "Device",
+//       search: { groups: [{ id: groupId }] },
+//       credentials: creds
+//     }
+//   });
+
+//   const listaDispositivos = dispositivos.data.result;
+  
+//   const status = await axiosInstance.post(`${server}/apiv1`, {
+//     method: "Get",
+//     params: {
+//       typeName: "DeviceStatusInfo",
+//       credentials: creds
+//     }
+//   });
+
+//   const statusData = status.data.result;
+
+//   const coordenadas = listaDispositivos.map(dev => {
+//     const matching = statusData.find(s => s.device.id === dev.id);
+//     if (matching) {
+//       return {
+//         id_dev: dev.id,
+//         nombre: dev.name,
+//         placas: dev.licensePlate || "Sin placas",
+//         identificador: dev.vehicleIdentificationNumber || "Sin VIN",
+//         grupo: dev.groups,
+//         x: matching.longitude,
+//         y: matching.latitude,
+//         speed: matching.speed,
+//         dateTime: matching.dateTime,
+//         isDriving: matching.isDriving
+//       };
+//     }
+//     return null;
+//   }).filter(Boolean);
+
+//   return coordenadas;
+// }
+
 async function obtenerVehiculosPorGrupo(groupId) {
   if (!sessionId) await authenticate();
 
@@ -39,7 +96,7 @@ async function obtenerVehiculosPorGrupo(groupId) {
     userName: GEOTAB_USER
   };
 
-  //  Obtener lista de dispositivos en el grupo
+  // Obtener lista de dispositivos en el grupo
   const dispositivos = await axiosInstance.post(`${server}/apiv1`, {
     method: "Get",
     params: {
@@ -50,7 +107,8 @@ async function obtenerVehiculosPorGrupo(groupId) {
   });
 
   const listaDispositivos = dispositivos.data.result;
-  
+
+  // Obtener status de los dispositivos
   const status = await axiosInstance.post(`${server}/apiv1`, {
     method: "Get",
     params: {
@@ -61,24 +119,45 @@ async function obtenerVehiculosPorGrupo(groupId) {
 
   const statusData = status.data.result;
 
-  const coordenadas = listaDispositivos.map(dev => {
+  const coordenadas = [];
+
+  for (const dev of listaDispositivos) {
     const matching = statusData.find(s => s.device.id === dev.id);
-    if (matching) {
-      return {
-        id_dev: dev.id,
-        nombre: dev.name,
-        placas: dev.licensePlate || "Sin placas",
-        identificador: dev.vehicleIdentificationNumber || "Sin VIN",
-        grupo: dev.groups,
-        x: matching.longitude,
-        y: matching.latitude,
-        speed: matching.speed,
-        dateTime: matching.dateTime,
-        isDriving: matching.isDriving
-      };
+    if (!matching) continue;
+
+    // Buscar la unidad en ls BD por id_geotab
+    const unidad = await prisma.unidades.findFirst({
+      where: { id_geotab: dev.id },
+      include: {
+        viajes: {
+          where: {
+            estado: { in: ["en_curso", "pendiente", "finalizado"] }, 
+          },
+          orderBy: { creado_en: 'desc' },
+          take: 1,
+        }
+      }
+    });
+
+    let pasajeros_actuales = 0;
+    if (unidad && unidad.viajes.length > 0) {
+      pasajeros_actuales = unidad.viajes[0].pasajeros_actuales || 0;
     }
-    return null;
-  }).filter(Boolean);
+
+    coordenadas.push({
+      id_dev: dev.id,
+      nombre: dev.name,
+      placas: dev.licensePlate || "Sin placas",
+      identificador: dev.vehicleIdentificationNumber || "Sin VIN",
+      grupo: dev.groups,
+      x: matching.longitude,
+      y: matching.latitude,
+      speed: matching.speed,
+      dateTime: matching.dateTime,
+      isDriving: matching.isDriving,
+      pasajeros_actuales, 
+    });
+  }
 
   return coordenadas;
 }
