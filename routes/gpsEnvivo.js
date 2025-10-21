@@ -34,58 +34,6 @@ async function authenticate() {
   return sessionId;
 }
 
-// async function obtenerVehiculosPorGrupo(groupId) {
-//   if (!sessionId) await authenticate();
-
-//   const creds = {
-//     database: GEOTAB_DB,
-//     sessionId: sessionId,
-//     userName: GEOTAB_USER
-//   };
-
-//   //  Obtener lista de dispositivos en el grupo
-//   const dispositivos = await axiosInstance.post(`${server}/apiv1`, {
-//     method: "Get",
-//     params: {
-//       typeName: "Device",
-//       search: { groups: [{ id: groupId }] },
-//       credentials: creds
-//     }
-//   });
-
-//   const listaDispositivos = dispositivos.data.result;
-  
-//   const status = await axiosInstance.post(`${server}/apiv1`, {
-//     method: "Get",
-//     params: {
-//       typeName: "DeviceStatusInfo",
-//       credentials: creds
-//     }
-//   });
-
-//   const statusData = status.data.result;
-
-//   const coordenadas = listaDispositivos.map(dev => {
-//     const matching = statusData.find(s => s.device.id === dev.id);
-//     if (matching) {
-//       return {
-//         id_dev: dev.id,
-//         nombre: dev.name,
-//         placas: dev.licensePlate || "Sin placas",
-//         identificador: dev.vehicleIdentificationNumber || "Sin VIN",
-//         grupo: dev.groups,
-//         x: matching.longitude,
-//         y: matching.latitude,
-//         speed: matching.speed,
-//         dateTime: matching.dateTime,
-//         isDriving: matching.isDriving
-//       };
-//     }
-//     return null;
-//   }).filter(Boolean);
-
-//   return coordenadas;
-// }
 
 async function obtenerVehiculosPorGrupo(groupId) {
   if (!sessionId) await authenticate();
@@ -125,23 +73,38 @@ async function obtenerVehiculosPorGrupo(groupId) {
     const matching = statusData.find(s => s.device.id === dev.id);
     if (!matching) continue;
 
-    // Buscar la unidad en ls BD por id_geotab
+    // buscar la unidad en BD por id_geotab
     const unidad = await prisma.unidades.findFirst({
       where: { id_geotab: dev.id },
       include: {
         viajes: {
           where: {
-            estado: { in: ["en_curso", "pendiente", "finalizado"] }, 
+            estado: { in: ["en_curso", "pendiente", "finalizado"] },
           },
-          orderBy: { creado_en: 'desc' },
+          orderBy: { creado_en: "desc" },
           take: 1,
-        }
-      }
+          include: {
+            rutas: true, //  incluye ruta 
+          },
+        },
+      },
     });
 
     let pasajeros_actuales = 0;
+    let ruta_info = null;
+
     if (unidad && unidad.viajes.length > 0) {
-      pasajeros_actuales = unidad.viajes[0].pasajeros_actuales || 0;
+      const viaje = unidad.viajes[0];
+      pasajeros_actuales = viaje.pasajeros_actuales || 0;
+
+      if (viaje.rutas) {
+        ruta_info = {
+          id: viaje.rutas.id,
+          nombre: viaje.rutas.nombre || "Ruta sin nombre",
+          origen: viaje.rutas.origen || null,
+          destino: viaje.rutas.destino || null,
+        };
+      }
     }
 
     coordenadas.push({
@@ -155,12 +118,14 @@ async function obtenerVehiculosPorGrupo(groupId) {
       speed: matching.speed,
       dateTime: matching.dateTime,
       isDriving: matching.isDriving,
-      pasajeros_actuales, 
+      pasajeros_actuales,
+      ruta: ruta_info,
     });
   }
 
   return coordenadas;
 }
+
 
 router.get('/geotab/vehiculos', async (req, res) => {
   try {
