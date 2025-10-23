@@ -88,7 +88,7 @@ model usuarios_ciudadanos {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model viajes {
-  id                        Int              @id @default(autoincrement())
+  id                        Int           @id @default(autoincrement())
   unidad_id                 Int?
   ruta_id                   Int?
   fecha                     DateTime         @db.Date
@@ -101,8 +101,8 @@ model viajes {
   creado_en                 DateTime?        @default(now()) @db.Timestamp(6)
   bitacora_cupos            bitacora_cupos[] @relation("ViajeBitacoraCupos")
   incidencias               incidencias[]
-  rutas                     rutas?           @relation(fields: [ruta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  unidades                  unidades?        @relation(fields: [unidad_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  rutas                     rutas?        @relation(fields: [ruta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  unidades                  unidades?     @relation(fields: [unidad_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   vueltas                   vueltas[]
 }
 
@@ -141,6 +141,7 @@ model incidencias {
   viajes       viajes?     @relation(fields: [viaje_id], references: [id], onUpdate: NoAction, map: "fk_incidencia_viaje")
 }
 
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model bitacora_cupos {
   id            Int         @id(map: "bitacora_cupos_pk") @default(autoincrement())
   viaje_id      Int
