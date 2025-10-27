@@ -597,3 +597,78 @@ exports.sendResetCode = async (to, code) => {
 
   await transporter.sendMail(mailOptions);
 };
+
+exports.sendRegistroCiudadanoEmail = async (
+  to,
+  nombre,
+  apellido,
+  curp,
+  telefono,
+  telefono_emergencia,
+  domicilio,
+  edad,
+  fotoUrl,
+  cartaUrl,
+  plainPassword
+) => {
+  const mailOptions = {
+    from: '"Unidad de Geomática" <soporte@zapopan.gob.mx>',
+    to,
+    subject: 'Registro exitoso - Plataforma Ciudadana Zapopan',
+    html: `
+    <html>
+    <body style="font-family: Arial, sans-serif; background-color: #f7f7f7; padding: 20px;">
+      <table align="center" width="600" cellpadding="0" cellspacing="0" style="background-color: #fff; border-radius: 10px; overflow: hidden;">
+        <tr>
+          <td style="background-color: #1C5D99; color: white; text-align: center; padding: 20px;">
+            <h2>Bienvenido(a), ${nombre} ${apellido}</h2>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 20px; color: #333;">
+            <p>Tu registro en la <strong>Plataforma Ciudadana Zapopan</strong> se ha completado correctamente.</p>
+            
+            <h3>📋 Datos registrados:</h3>
+            <ul style="line-height: 1.6;">
+              <li><strong>Nombre:</strong> ${nombre} ${apellido}</li>
+              <li><strong>CURP:</strong> ${curp}</li>
+              <li><strong>Correo:</strong> ${to}</li>
+              <li><strong>Teléfono:</strong> ${telefono}</li>
+              <li><strong>Teléfono de emergencia:</strong> ${telefono_emergencia}</li>
+              <li><strong>Domicilio:</strong> ${domicilio}</li>
+              <li><strong>Edad:</strong> ${edad || "No especificada"}</li>
+            </ul>
+
+            <h3>🔐 Credenciales de acceso:</h3>
+            <p><strong>Usuario:</strong> ${to}</p>
+            <p><strong>Contraseña:</strong> ${plainPassword}</p>
+
+            ${
+              fotoUrl
+                ? `<p>📸 <strong>Foto de perfil:</strong><br><a href="${fotoUrl}" target="_blank">${fotoUrl}</a></p>`
+                : ""
+            }
+            ${
+              cartaUrl
+                ? `<p>📝 <strong>Carta de anuencia:</strong><br><a href="${cartaUrl}" target="_blank">${cartaUrl}</a></p>`
+                : ""
+            }
+
+            <p style="margin-top: 30px;">Si no realizaste este registro o necesitas asistencia, por favor contacta al equipo de soporte.</p>
+
+            <p style="margin-top: 20px;">Saludos cordiales,<br><strong>Unidad de Geomática</strong><br>Gobierno de Zapopan</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color: #DDFFE7; text-align: center; padding: 15px; font-size: 12px; color: #666;">
+            © 2025 Gobierno de Zapopan · Todos los derechos reservados
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+    `
+  };
+
+  await transporter.sendMail(mailOptions);
+};

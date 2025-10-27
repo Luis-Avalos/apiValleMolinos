@@ -1,5 +1,7 @@
 const prisma = require('../models/userModel');
 const bcrypt = require('bcrypt');
+const { sendResetCode } = require('../utils/emailSender');
+const { sendRegistroCiudadanoEmail } = require('../utils/emailSender');
 
 const multer = require('multer');
 const AWS = require('aws-sdk');
@@ -87,6 +89,8 @@ exports.createCiudadano = [
         console.error(" No se la contraseña en el body");
         return res.status(400).json({ error: "La contraseña es requerida" });
       }
+       const plainPassword = password;
+
 
       const hashed = await bcrypt.hash(password, 10);
 
@@ -122,7 +126,32 @@ exports.createCiudadano = [
         }
       });
 
-      res.status(201).json(nuevo);
+       try {
+        await sendRegistroCiudadanoEmail(
+            email,
+            nombre,
+            apellido,
+            curp,
+            telefono,
+            telefono_emergencia,
+            domicilio,
+            edad,
+            fotoUrl,
+            cartaUrl,
+            plainPassword
+          );
+
+        console.log(` Correo enviado a ${email}`);
+      } catch (mailError) {
+        console.error(" Error al enviar el correo:", mailError);
+      }
+
+      //  Responder al frontend
+      res.status(201).json({
+        message: "Ciudadano registrado correctamente",
+        ciudadano: nuevo
+      });
+
     } catch (error) {
       console.error("Error en createCiudadano:", error);
       res.status(500).json({ error: 'Error al crear ciudadano', details: error.message });
