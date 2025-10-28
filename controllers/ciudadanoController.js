@@ -97,16 +97,21 @@ exports.createCiudadano = [
       let fotoUrl = null;
       let cartaUrl = null;
 
-      // Subir archivos (foto + carta)
-      if (req.files && req.files.length > 0) {
-        for (const file of req.files) {
-          if (file.fieldname === "foto_perfil") {
-            fotoUrl = await subirAS3(file, email);
-          } else if (file.fieldname === "carta_anuencia") {
-            cartaUrl = await subirAS3(file, email);
+      
+        // Subir archivos (foto + carta)
+        if (req.files && req.files.length > 0) {
+          for (const file of req.files) {
+            if (file.fieldname === "foto_perfil") {
+              fotoUrl = await subirAS3(file, email);
+            } else if (file.fieldname === "carta_anuencia") {
+              cartaUrl = await subirAS3(file, email);
+            }
           }
+        } else {
+          // 👇 Si no se enviaron archivos, usar URLs del body (por ejemplo desde Postman)
+          if (req.body.foto_perfil_url) fotoUrl = req.body.foto_perfil_url;
+          if (req.body.carta_anuencia_url) cartaUrl = req.body.carta_anuencia_url;
         }
-      }
 
       // registro en la base de datos
       const nuevo = await prisma.usuarios_ciudadanos.create({
