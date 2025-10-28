@@ -97,7 +97,7 @@ exports.createCiudadano = [
       let fotoUrl = null;
       let cartaUrl = null;
 
-      
+
         // Subir archivos (foto + carta)
         if (req.files && req.files.length > 0) {
           for (const file of req.files) {
@@ -138,7 +138,6 @@ exports.createCiudadano = [
             apellido,
             curp,
             telefono,
-            telefono_emergencia,
             domicilio,
             edad,
             fotoUrl,
