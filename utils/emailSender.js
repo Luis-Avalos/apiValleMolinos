@@ -1,19 +1,22 @@
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASSWORD,
-  }
+    service: "gmail",
+    auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASSWORD,
+    },
+    tls: {
+    rejectUnauthorized: false, 
+  },
 });
 
 exports.sendResetCode = async (to, code) => {
-  const mailOptions = {
-    from: '"Soporte Geomática" <soporte@zapopan.gob.mx>',
-    to,
-    subject: 'Código de recuperación de contraseña',
-    html: `
+    const mailOptions = {
+        from: '"Soporte Geomática" <soporte@zapopan.gob.mx>',
+        to,
+        subject: "Código de recuperación de contraseña",
+        html: `
      <!DOCTYPE html
     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html dir="ltr" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="es">
@@ -593,82 +596,341 @@ exports.sendResetCode = async (to, code) => {
 
 
     `,
-  };
+    };
 
-  await transporter.sendMail(mailOptions);
+    await transporter.sendMail(mailOptions);
 };
 
 exports.sendRegistroCiudadanoEmail = async (
-  to,
-  nombre,
-  apellido,
-  curp,
-  telefono,
-  telefono_emergencia,
-  domicilio,
-  edad,
-  fotoUrl,
-  cartaUrl,
-  plainPassword
-) => {
-  const mailOptions = {
-    from: '"Unidad de Geomática" <soporte@zapopan.gob.mx>',
     to,
-    subject: 'Registro exitoso - Plataforma Ciudadana Zapopan',
-    html: `
-    <html>
-    <body style="font-family: Arial, sans-serif; background-color: #f7f7f7; padding: 20px;">
-      <table align="center" width="600" cellpadding="0" cellspacing="0" style="background-color: #fff; border-radius: 10px; overflow: hidden;">
-        <tr>
-          <td style="background-color: #1C5D99; color: white; text-align: center; padding: 20px;">
-            <h2>Bienvenido(a), ${nombre} ${apellido}</h2>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 20px; color: #333;">
-            <p>Tu registro en la <strong>Plataforma Ciudadana Zapopan</strong> se ha completado correctamente.</p>
-            
-            <h3>📋 Datos registrados:</h3>
-            <ul style="line-height: 1.6;">
-              <li><strong>Nombre:</strong> ${nombre} ${apellido}</li>
-              <li><strong>CURP:</strong> ${curp}</li>
-              <li><strong>Correo:</strong> ${to}</li>
-              <li><strong>Teléfono:</strong> ${telefono}</li>
-              <li><strong>Teléfono de emergencia:</strong> ${telefono_emergencia}</li>
-              <li><strong>Domicilio:</strong> ${domicilio}</li>
-              <li><strong>Edad:</strong> ${edad || "No especificada"}</li>
-            </ul>
+    nombre,
+    apellido,
+    curp,
+    telefono,
+    telefono_emergencia,
+    domicilio,
+    edad,
+    fotoUrl,
+    cartaUrl,
+    plainPassword
+) => {
+    const mailOptions = {
+        from: '"Camioncito Zapopan | Movilidad" <soporte@zapopan.gob.mx>',
+        to,
+        subject: "Registro exitoso - Plataforma Camioncito Zapopan",
+        html: `
+   <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="es">
+ <head>
+  <meta charset="UTF-8">
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <meta name="x-apple-disable-message-reformatting">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta content="telephone=no" name="format-detection">
+  <title>Copia de (1) New Message</title><!--[if (mso 16)]>
+    <style type="text/css">
+    a {text-decoration: none;}
+    </style>
+    <![endif]--><!--[if gte mso 9]><style>sup { font-size: 100% !important; }</style><![endif]--><!--[if gte mso 9]>
+<noscript>
+         <xml>
+           <o:OfficeDocumentSettings>
+           <o:AllowPNG></o:AllowPNG>
+           <o:PixelsPerInch>96</o:PixelsPerInch>
+           </o:OfficeDocumentSettings>
+         </xml>
+      </noscript>
+<![endif]--><!--[if mso]><xml>
+    <w:WordDocument xmlns:w="urn:schemas-microsoft-com:office:word">
+      <w:DontUseAdvancedTypographyReadingMail/>
+    </w:WordDocument>
+    </xml><![endif]-->
+  <style type="text/css">.rollover:hover .rollover-first {
+  max-height:0px!important;
+  display:none!important;
+}
+.rollover:hover .rollover-second {
+  max-height:none!important;
+  display:block!important;
+}
+.rollover span {
+  font-size:0px;
+}
+u + .body img ~ div div {
+  display:none;
+}
+#outlook a {
+  padding:0;
+}
+span.MsoHyperlink,
+span.MsoHyperlinkFollowed {
+  color:inherit;
+  mso-style-priority:99;
+}
+a.t {
+  mso-style-priority:100!important;
+  text-decoration:none!important;
+}
+a[x-apple-data-detectors],
+#MessageViewBody a {
+  color:inherit!important;
+  text-decoration:none!important;
+  font-size:inherit!important;
+  font-family:inherit!important;
+  font-weight:inherit!important;
+  line-height:inherit!important;
+}
+.h {
+  display:none;
+  float:left;
+  overflow:hidden;
+  width:0;
+  max-height:0;
+  line-height:0;
+  mso-hide:all;
+}
+@media only screen and (max-width:600px) {.bj { padding-right:0px!important } .bi { padding-left:0px!important }  *[class="gmail-fix"] { display:none!important } p, a { line-height:150%!important } h1, h1 a { line-height:120%!important } h2, h2 a { line-height:120%!important } h3, h3 a { line-height:120%!important } h4, h4 a { line-height:120%!important } h5, h5 a { line-height:120%!important } h6, h6 a { line-height:120%!important }  .bf p { } .be p { } .bd p { } h1 { font-size:36px!important; text-align:left } h2 { font-size:26px!important; text-align:left } h3 { font-size:20px!important; text-align:left } h4 { font-size:24px!important; text-align:left } h5 { font-size:20px!important; text-align:left } h6 { font-size:16px!important; text-align:left }      .bg h6 a, .bf h6 a, .be h6 a { font-size:16px!important }   .bf p, .bf a { font-size:16px!important } .be p, .be a { font-size:14px!important } .bd p, .bd a { font-size:12px!important }      .z .rollover:hover .rollover-second, .ba .rollover:hover .rollover-second, .bb .rollover:hover .rollover-second { display:inline!important }  .y { display:inline-table }      .m table, .n table, .o table, .m, .o, .n { width:100%!important; max-width:600px!important } .adapt-img { width:100%!important; height:auto!important }          .h-auto { height:auto!important }   .a .b, .a .b * { font-size:18px!important; line-height:150%!important } }
+@media screen and (max-width:384px) {.mail-message-content { width:414px!important } }</style>
+ </head>
+ <body class="body" style="width:100%;height:100%;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0">
+  <div dir="ltr" class="es-wrapper-color" lang="es" style="background-color:#FAFAFA"><!--[if gte mso 9]>
+			<v:background xmlns:v="urn:schemas-microsoft-com:vml" fill="t">
+				<v:fill type="tile" color="#fafafa"></v:fill>
+			</v:background>
+		<![endif]-->
+   <table width="100%" cellspacing="0" cellpadding="0" class="es-wrapper" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;padding:0;Margin:0;width:100%;height:100%;background-repeat:repeat;background-position:center top;background-color:#FAFAFA">
+     <tr>
+      <td valign="top" style="padding:0;Margin:0">
+       <table cellpadding="0" cellspacing="0" align="center" class="m" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;width:100%;table-layout:fixed !important">
+         <tr>
+          <td align="center" style="padding:0;Margin:0">
+           <table align="center" cellpadding="0" cellspacing="0" bgcolor="#00000000" class="bf" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;background-color:transparent;width:600px" role="none">
+             <tr>
+              <td align="left" style="padding:20px;Margin:0">
+               <table cellpadding="0" cellspacing="0" width="100%" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px">
+                 <tr>
+                  <td align="center" valign="top" style="padding:0;Margin:0;width:560px">
+                   <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px">
+                     <tr>
+                      <td align="center" class="bd" style="padding:0;Margin:0"><p style="Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:18px;letter-spacing:0;color:#CCCCCC;font-size:12px"><a target="_blank" href="" style="mso-line-height-rule:exactly;text-decoration:underline;color:#CCCCCC;font-size:12px">View online version</a></p></td>
+                     </tr>
+                   </table></td>
+                 </tr>
+               </table></td>
+             </tr>
+           </table></td>
+         </tr>
+       </table>
+       <table cellpadding="0" cellspacing="0" align="center" class="n" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;width:100%;table-layout:fixed !important;background-color:transparent;background-repeat:repeat;background-position:center top">
+         <tr>
+          <td align="center" style="padding:0;Margin:0">
+           <table bgcolor="#E69138" align="center" cellpadding="0" cellspacing="0" class="bg" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;background-color:transparent;width:600px">
+             <tr bgcolor="#E69138">
+              <td align="left" style="Margin:0;padding-top:10px;padding-right:20px;padding-bottom:10px;padding-left:20px">
+               <table cellpadding="0" cellspacing="0" width="100%" bgcolor="#E69138" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px">
+                 <tr>
+                  <td valign="top" align="center" class="bj" style="padding:0;Margin:0;width:560px">
+                   <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px">
+                     <tr>
+                      <td align="center" style="padding:0;Margin:0;font-size:0"><img alt="" width="560" src="https://fpdtjni.stripocdn.email/content/guids/CABINET_5d9543e827a065c12d9b79a3da06bbaa662dffae34e3fbee6681ded4674e15b8/images/sdsds.png" class="adapt-img" style="display:block;font-size:14px;border:0;outline:none;text-decoration:none;margin:0"></td>
+                     </tr>
+                   </table></td>
+                 </tr>
+               </table></td>
+             </tr>
+           </table></td>
+         </tr>
+       </table>
+       <table cellpadding="0" cellspacing="0" align="center" class="m" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;width:100%;table-layout:fixed !important">
+         <tr class="es-visible-simple-html-only">
+          <td align="center" class="es-stripe-html" style="padding:0;Margin:0">
+           <table bgcolor="#ffffff" align="center" cellpadding="0" cellspacing="0" class="bf" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;background-color:#FFFFFF;width:600px">
+             <tr>
+              <td align="left" bgcolor="#DDFFE7" style="padding:0;Margin:0">
+               <table cellpadding="0" cellspacing="0" width="100%" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px">
+                 <tr>
+                  <td align="center" valign="top" style="padding:0;Margin:0;width:600px">
+                   <table cellpadding="0" cellspacing="0" width="100%" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;border-radius:5px;border-collapse:separate" role="presentation">
+                     <tr>
+                      <td align="center" style="padding:0;Margin:0;padding-bottom:10px;padding-top:25px;font-size:0;background-color:white"><img src="https://fpdtjni.stripocdn.email/content/guids/CABINET_5d9543e827a065c12d9b79a3da06bbaa662dffae34e3fbee6681ded4674e15b8/images/imagecc.png" alt="" height="367" style="display:block;font-size:14px;border:0;outline:none;text-decoration:none;margin:0"></td>
+                     </tr>
+                   </table></td>
+                 </tr>
+               </table></td>
+             </tr>
+             <tr>
+              <td align="left" bgcolor="#ffffff" style="padding:0;Margin:0;padding-right:20px;padding-left:20px;padding-bottom:30px;background-color:#ffffff">
+               <table cellpadding="0" cellspacing="0" width="100%" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px">
+                 <tr>
+                  <td align="center" valign="top" style="padding:0;Margin:0;width:560px">
+                   <table cellpadding="0" cellspacing="0" width="100%" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;border-radius:5px;border-collapse:separate" role="presentation">
+                     <tr>
+                      <td align="center" style="padding:20px;Margin:0;font-size:0">
+                       <table border="0" width="100%" height="100%" cellpadding="0" cellspacing="0" class="y" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px">
+                         <tr>
+                          <td style="padding:0;Margin:0;height:0px;width:100%;margin:0px;border-bottom:1px solid #cccccc;background:none"></td>
+                         </tr>
+                       </table></td>
+                     </tr>
+                     <tr>
+                      <td align="center" class="bj bi d" style="Margin:0;padding-top:5px;padding-right:40px;padding-bottom:5px;padding-left:40px"><h4 style="Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:24px;font-style:normal;font-weight:normal;line-height:28.8px;color:#333333"><strong> Tu registro en la&nbsp;Plataforma Ciudadana Zapopan&nbsp;se ha completado correctamente. </strong></h4><p style="Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px"><br></p></td>
+                     </tr>
+                     <tr>
+                     
 
-            <h3>🔐 Credenciales de acceso:</h3>
-            <p><strong>Usuario:</strong> ${to}</p>
-            <p><strong>Contraseña:</strong> ${plainPassword}</p>
+                     <td align="center" style="padding:0;Margin:0;padding-top:30px;padding-right:25px;padding-left:25px">
+  <h6 style="Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;
+  letter-spacing:0;font-size:16px;font-style:normal;font-weight:normal;line-height:19.2px;color:#333333">
+    Por favor, verifica que la siguiente información sea correcta:
+  </h6>
 
-            ${
-              fotoUrl
-                ? `<p>📸 <strong>Foto de perfil:</strong><br><a href="${fotoUrl}" target="_blank">${fotoUrl}</a></p>`
-                : ""
-            }
-            ${
-              cartaUrl
-                ? `<p>📝 <strong>Carta de anuencia:</strong><br><a href="${cartaUrl}" target="_blank">${cartaUrl}</a></p>`
-                : ""
-            }
+  <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;
+  color:#3d85c6;font-size:14px"><br></p>
 
-            <p style="margin-top: 30px;">Si no realizaste este registro o necesitas asistencia, por favor contacta al equipo de soporte.</p>
+  <h6 style="Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;
+  letter-spacing:0;font-size:16px;font-style:normal;font-weight:normal;
+  line-height:19.2px;color:#3d85c6">
+    <u><a href="https://www.facebook.com/ZapopanGob/" target="_blank"
+    style="text-decoration:underline;color:#3d85c6;font-size:16px">
+    Enlace para iniciar sesión
+    </a></u>
+  </h6>
 
-            <p style="margin-top: 20px;">Saludos cordiales,<br><strong>Unidad de Geomática</strong><br>Gobierno de Zapopan</p>
-          </td>
-        </tr>
-        <tr>
-          <td style="background-color: #DDFFE7; text-align: center; padding: 15px; font-size: 12px; color: #666;">
-            © 2025 Gobierno de Zapopan · Todos los derechos reservados
-          </td>
-        </tr>
-      </table>
-    </body>
-    </html>
-    `
-  };
+  <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;
+  color:#333333;font-size:14px"><br></p>
 
-  await transporter.sendMail(mailOptions);
+  <h6 style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
+  letter-spacing:0;font-size:16px;font-style:normal;font-weight:normal;
+  line-height:19.2px;color:#333333">
+    <strong>Información registrada</strong>
+  </h6>
+
+  <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
+  line-height:28px;color:#333333;font-size:14px;text-align:center">
+    <strong>Nombre:</strong> ${nombre} ${apellido}
+  </p>
+  <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
+  line-height:28px;color:#333333;font-size:14px;text-align:center">
+    <strong>CURP:</strong> ${curp}
+  </p>
+  <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
+  line-height:28px;color:#333333;font-size:14px;text-align:center">
+    <strong>Correo:</strong> ${to}
+  </p>
+  <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
+  line-height:28px;color:#333333;font-size:14px;text-align:center">
+    <strong>Celular:</strong> ${telefono}
+  </p>
+  <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
+  line-height:28px;color:#333333;font-size:14px;text-align:center">
+    <strong>Domicilio:</strong> ${domicilio}
+  </p>
+  <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
+  line-height:28px;color:#333333;font-size:14px;text-align:center">
+    <strong>Edad:</strong> ${edad}
+  </p>
+
+  <!-- Mostrar foto solo si existe -->
+  ${fotoUrl ? `
+  <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
+  line-height:28px;color:#333333;font-size:14px;text-align:center;margin-top:15px;">
+    <strong>Fotografía:</strong><br>
+    <img src="${fotoUrl}" alt="Fotografía" style="max-width:150px;border-radius:8px;margin-top:10px;">
+  </p>` : ''}
+
+  <!-- Mostrar carta PDF solo si existe -->
+  ${cartaUrl ? `
+  <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
+  line-height:28px;color:#333333;font-size:14px;text-align:center;margin-top:15px;">
+    <strong>Carta:</strong><br>
+    <a href="${cartaUrl}" target="_blank" style="color:#3d85c6;text-decoration:underline;">
+      Abrir carta (PDF)
+    </a>
+  </p>` : ''}
+
+  <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
+  line-height:21px;color:#333333;font-size:14px;text-align:center;margin-top:15px;">
+    <strong>Contraseña del sitio:</strong> ${plainPassword}
+  </p>
+
+  <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
+  line-height:21px;color:#333333;font-size:14px;margin-top:10px;">
+    Si no solicitaste este servicio, por favor, ignora este correo.
+  </p>
+
+  <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
+  line-height:21px;color:#333333;font-size:14px;">
+    Si necesitas ayuda adicional, no dudes en contactarnos.
+  </p>
+
+  <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
+  line-height:21px;color:#333333;font-size:14px;">
+    Saludos cordiales,
+  </p>
+
+  <h6 style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
+  letter-spacing:0;font-size:16px;font-style:normal;font-weight:normal;
+  line-height:19.2px;color:#333333;margin-top:15px;">
+    <u>Dirección de Movilidad Zapopan</u>
+  </h6>
+</td>
+                     
+                     
+                     </tr>
+                   </table></td>
+                 </tr>
+               </table></td>
+             </tr>
+           </table></td>
+         </tr>
+       </table>
+       <table cellpadding="0" cellspacing="0" align="center" class="o" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;width:100%;table-layout:fixed !important;background-color:transparent;background-repeat:repeat;background-position:center top">
+         <tr>
+          <td align="center" style="padding:0;Margin:0">
+           <table align="center" cellpadding="0" cellspacing="0" class="be" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;background-color:transparent;width:640px" role="none">
+             <tr>
+              <td align="left" bgcolor="#e69138" style="Margin:0;padding-right:20px;padding-left:20px;padding-top:20px;padding-bottom:20px;background-color:#e69138">
+               <table cellpadding="0" cellspacing="0" width="100%" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px">
+                 <tr>
+                  <td align="left" style="padding:0;Margin:0;width:600px">
+                   <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px">
+                     <tr>
+                      <td align="center" class="a" style="padding:0;Margin:0;padding-bottom:35px"><p style="Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:18px;letter-spacing:0;color:#333333;font-size:12px"><br></p><h6 class="b" style="Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:18px;font-style:normal;font-weight:normal;line-height:21.6px;color:#ffffff">Municipio de Zapopan, Jalisco <br>Prolongación Avenida Laureles 300, <br>Colonia Tepeyac C.P. 45150, <br>Zapopan, Jalisco. México <br>33 3818 2200</h6></td>
+                     </tr>
+                   </table></td>
+                 </tr>
+               </table></td>
+             </tr>
+           </table></td>
+         </tr>
+       </table>
+       <table cellpadding="0" cellspacing="0" align="center" class="m" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;width:100%;table-layout:fixed !important">
+         <tr>
+          <td align="center" class="es-info-area" style="padding:0;Margin:0">
+           <table align="center" cellpadding="0" cellspacing="0" bgcolor="#00000000" class="bf" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;background-color:transparent;width:600px" role="none">
+             <tr>
+              <td align="left" style="padding:20px;Margin:0">
+               <table cellpadding="0" cellspacing="0" width="100%" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px">
+                 <tr>
+                  <td align="center" valign="top" style="padding:0;Margin:0;width:560px">
+                   <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px">
+                     <tr>
+                      <td align="center" class="bd" style="padding:0;Margin:0"><p style="Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:18px;letter-spacing:0;color:#CCCCCC;font-size:12px"><a target="_blank" href="" style="mso-line-height-rule:exactly;text-decoration:underline;color:#CCCCCC;font-size:12px"></a>No longer want to receive these emails?&nbsp;<a href="" target="_blank" style="mso-line-height-rule:exactly;text-decoration:underline;color:#CCCCCC;font-size:12px">Unsubscribe</a>.<a target="_blank" href="" style="mso-line-height-rule:exactly;text-decoration:underline;color:#CCCCCC;font-size:12px"></a></p></td>
+                     </tr>
+                   </table></td>
+                 </tr>
+               </table></td>
+             </tr>
+           </table></td>
+         </tr>
+       </table></td>
+     </tr>
+   </table>
+  </div>
+ </body>
+</html>
+    `,
+    };
+
+    await transporter.sendMail(mailOptions);
 };
