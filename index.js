@@ -63,5 +63,34 @@ io.on("connection", (socket) => {
 // `io` para los controladores
 app.set("io", io);
 
+
+app.get('/api/ping', (req, res) => {
+  try {
+    const info = {
+      status: 'ok',
+      message: 'Servidor accesible correctamente ',
+      fecha: new Date().toISOString(),
+      ip_cliente: req.ip,
+      ip_servidor: req.socket.localAddress,
+      puerto_servidor: req.socket.localPort,
+      protocolo: req.protocol,
+      cabeceras: req.headers,
+      entorno: process.env.NODE_ENV || 'development',
+      version_node: process.version,
+      url_backend: req.originalUrl,
+    };
+
+    res.json(info);
+  } catch (error) {
+    console.error('Error en /api/ping:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error interno en el servidor ',
+      detalle: error.message,
+    });
+  }
+});
+
+
 const PORT = process.env.PORT || 3004;
 server.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`));

@@ -47,4 +47,4 @@ exports.loginCiudadanos = async (req, res) => {
     console.error('Error en login:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
-};
+}
