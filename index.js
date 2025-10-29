@@ -91,6 +91,28 @@ app.get('/api/ping', (req, res) => {
   }
 });
 
+app.post('/api/test-post', (req, res) => {
+  try {
+    console.log('POST recibido:', req.body);
+
+    res.json({
+      status: 'ok',
+      message: 'POST recibido correctamente ',
+      body: req.body,
+      headers: req.headers,
+      ip_cliente: req.ip,
+    });
+  } catch (error) {
+    console.error('Error en /api/test-post:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'El servidor sí recibió la solicitud pero falló al procesarla ',
+      detalle: error.message,
+    });
+  }
+});
+
+
 
 const PORT = process.env.PORT || 3004;
 server.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`));
