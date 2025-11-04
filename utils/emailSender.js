@@ -824,11 +824,7 @@ a[x-apple-data-detectors],
   line-height:28px;color:#333333;font-size:14px;text-align:center">
     <strong>Domicilio:</strong> ${domicilio}
   </p>
-  <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
-  line-height:28px;color:#333333;font-size:14px;text-align:center">
-    <strong>Edad:</strong> ${edad}
-  </p>
-
+ 
   <!-- Mostrar foto solo si existe -->
   ${fotoUrl ? `
   <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
