@@ -11,7 +11,7 @@ const axiosInstance = axios.create({
 });
 
 // CONFIGURACIÓN GEOTAB MÉTRICA
-const GEOTAB_DB = process.env.GEOTAB_DB || "camioncito_zapopan";
+const GEOTAB_DB = process.env.GEOTAB_DB;
 const GEOTAB_USER = process.env.GEOTAB_USER;
 const GEOTAB_PASS = process.env.GEOTAB_PASS;
 

@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const dashboard = require('../controllers/dashboardData');
+const authMiddleware = require('../middlewares/authMiddleware');
 
-router.get('/subidasbajadas', dashboard.getAllSubidasbajadas);
-router.get('/unidadesstats', dashboard.getUnidadesStats);
-router.get('/conductoresstats', dashboard.getConductoresStats);
-router.get('/viajesstats', dashboard.getViajesStats);
+router.get('/subidasbajadas', authMiddleware,dashboard.getAllSubidasbajadas);
+router.get('/unidadesstats', authMiddleware,dashboard.getUnidadesStats);
+router.get('/conductoresstats', authMiddleware,dashboard.getConductoresStats);
+router.get('/viajesstats', authMiddleware,dashboard.getViajesStats);
 
 module.exports = router;

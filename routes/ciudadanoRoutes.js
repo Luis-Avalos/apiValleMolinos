@@ -3,10 +3,10 @@ const router = express.Router();
 const ciudadanoController = require('../controllers/ciudadanoController'); 
 const authMiddleware = require('../middlewares/authMiddleware');
 
-router.get('/',  ciudadanoController.getAllCiudadanos);
-router.get('/:id', ciudadanoController.getCiudadanoById);
-router.post('/',  ciudadanoController.createCiudadano);
-router.put('/:id', ciudadanoController.updateCiudadano);
-router.delete('/:id', ciudadanoController.deleteCiudadano);
-router.post('/:id/foto', ciudadanoController.uploadFotoPerfilCiudadano);
+router.get('/', authMiddleware, ciudadanoController.getAllCiudadanos);
+router.get('/:id', authMiddleware,ciudadanoController.getCiudadanoById);
+router.post('/',  authMiddleware,ciudadanoController.createCiudadano);
+router.put('/:id', authMiddleware,ciudadanoController.updateCiudadano);
+router.delete('/:id', authMiddleware,ciudadanoController.deleteCiudadano);
+router.post('/:id/foto', authMiddleware,ciudadanoController.uploadFotoPerfilCiudadano);
 module.exports = router;
