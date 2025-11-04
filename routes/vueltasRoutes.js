@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const vueltasController = require('../controllers/vueltasController');
+const authMiddleware = require('../middlewares/authMiddleware');
 
 // CRUD de vueltas
-router.get('/', vueltasController.getAllVueltas);
-router.get('/:id', vueltasController.getVueltaById);
-router.post('/', vueltasController.createVuelta);
-router.put('/:id', vueltasController.updateVuelta);
-router.delete('/:id', vueltasController.deleteVuelta);
+router.get('/', authMiddleware,vueltasController.getAllVueltas);
+router.get('/:id', authMiddleware,vueltasController.getVueltaById);
+router.post('/', authMiddleware,vueltasController.createVuelta);
+router.put('/:id', authMiddleware,vueltasController.updateVuelta);
+router.delete('/:id', authMiddleware,vueltasController.deleteVuelta);
 
 module.exports = router;
