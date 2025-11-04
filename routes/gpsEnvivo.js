@@ -6,19 +6,23 @@ const router = express.Router();
 const axios = require('axios');
 const https = require('https');
 
-
 const axiosInstance = axios.create({
   httpsAgent: new https.Agent({ rejectUnauthorized: false })
 });
 
-const GEOTAB_DB = process.env.GEOTAB_DB;
+// CONFIGURACIÓN GEOTAB MÉTRICA
+const GEOTAB_DB = process.env.GEOTAB_DB || "camioncito_zapopan";
 const GEOTAB_USER = process.env.GEOTAB_USER;
 const GEOTAB_PASS = process.env.GEOTAB_PASS;
 
+// servidor actualizado:
+let server = 'https://metrica.geotab.com';
+
 let sessionId = null;
-let server = 'https://my.geotab.com';
 
-
+// ===========================
+// AUTENTICACIÓN
+// ===========================
 async function authenticate() {
   const response = await axiosInstance.post(`${server}/apiv1`, {
     method: "Authenticate",
@@ -30,21 +34,21 @@ async function authenticate() {
   });
 
   sessionId = response.data.result.credentials.sessionId;
-  console.log("Autenticado correctamente en Geotab");
+  console.log("Autenticado correctamente en Geotab Métrica");
   return sessionId;
 }
 
-
+// OBTENER VEHÍCULOS POR GRUPO
 async function obtenerVehiculosPorGrupo(groupId) {
   if (!sessionId) await authenticate();
 
   const creds = {
     database: GEOTAB_DB,
-    sessionId: sessionId,
+    sessionId,
     userName: GEOTAB_USER
   };
 
-  // Obtener lista de dispositivos en el grupo
+  //  Obtener lista de dispositivos del grupo
   const dispositivos = await axiosInstance.post(`${server}/apiv1`, {
     method: "Get",
     params: {
@@ -56,7 +60,7 @@ async function obtenerVehiculosPorGrupo(groupId) {
 
   const listaDispositivos = dispositivos.data.result;
 
-  // Obtener status de los dispositivos
+  //  Obtener status de todos los dispositivos
   const status = await axiosInstance.post(`${server}/apiv1`, {
     method: "Get",
     params: {
@@ -73,21 +77,17 @@ async function obtenerVehiculosPorGrupo(groupId) {
     const matching = statusData.find(s => s.device.id === dev.id);
     if (!matching) continue;
 
-    // buscar la unidad en BD por id_geotab
+    // Buscar unidad en BD
     const unidad = await prisma.unidades.findFirst({
       where: { id_geotab: dev.id },
       include: {
         viajes: {
-          where: {
-            estado: { in: ["en_curso", "pendiente", "finalizado"] },
-          },
+          where: { estado: { in: ["en_curso", "pendiente", "finalizado"] } },
           orderBy: { creado_en: "desc" },
           take: 1,
-          include: {
-            rutas: true, //  incluye ruta 
-          },
-        },
-      },
+          include: { rutas: true }
+        }
+      }
     });
 
     let pasajeros_actuales = 0;
@@ -126,54 +126,40 @@ async function obtenerVehiculosPorGrupo(groupId) {
   return coordenadas;
 }
 
+// ENDPOINTS
 
-router.get('/geotab/vehiculos', async (req, res) => {
-  try {
-    const data = await obtenerVehiculosPorGrupo("b27E1"); 
-    res.json(data);
-  } catch (err) {
-    console.error("Error en /geotab/vehiculos:", err.response?.data || err.message);
-    res.status(500).json({ error: "Error al obtener datos desde Geotab" });
-  }
-});
-
-
+// Grupo principal de Camioncito Zapopan (nuevo ID: b27A1)
 router.get('/geotab/vcamioncitozapopan', async (req, res) => {
   try {
-    const data = await obtenerVehiculosPorGrupo("b27C0"); 
+    const data = await obtenerVehiculosPorGrupo("b27A1");
     res.json(data);
   } catch (err) {
     console.error("Error en /geotab/vcamioncitozapopan:", err.response?.data || err.message);
-    res.status(500).json({ error: "Error al obtener datos desde Geotab" });
+    res.status(500).json({ error: "Error al obtener datos desde Geotab Métrica" });
   }
 });
 
+// Vehículo individual por ID (ejemplo: b7)
 router.get('/geotab/vehiculo/:id', async (req, res) => {
-  const { id } = req.params; // ejemplo: b3B6
+  const { id } = req.params;
 
   try {
     if (!sessionId) await authenticate();
 
     const creds = {
       database: GEOTAB_DB,
-      sessionId: sessionId,
+      sessionId,
       userName: GEOTAB_USER
     };
 
-    // Obtener info del vehículo
     const dispositivo = await axiosInstance.post(`${server}/apiv1`, {
       method: "Get",
-      params: {
-        typeName: "Device",
-        search: { id }, 
-        credentials: creds
-      }
+      params: { typeName: "Device", search: { id }, credentials: creds }
     });
 
     const vehiculo = dispositivo.data.result[0];
     if (!vehiculo) return res.status(404).json({ error: "Vehículo no encontrado" });
 
-    // Obtener su estatus 
     const status = await axiosInstance.post(`${server}/apiv1`, {
       method: "Get",
       params: {
@@ -185,7 +171,7 @@ router.get('/geotab/vehiculo/:id', async (req, res) => {
 
     const statusData = status.data.result[0];
 
-    const data = {
+    res.json({
       id_dev: vehiculo.id,
       nombre: vehiculo.name,
       placas: vehiculo.licensePlate || "Sin placas",
@@ -196,15 +182,12 @@ router.get('/geotab/vehiculo/:id', async (req, res) => {
       speed: statusData?.speed || 0,
       dateTime: statusData?.dateTime || null,
       isDriving: statusData?.isDriving || false
-    };
-
-    res.json(data);
+    });
 
   } catch (err) {
     console.error("Error en /geotab/vehiculo/:id:", err.response?.data || err.message);
-    res.status(500).json({ error: "Error al obtener datos del vehículo desde Geotab" });
+    res.status(500).json({ error: "Error al obtener datos del vehículo desde Geotab Métrica" });
   }
 });
-
 
 module.exports = router;
