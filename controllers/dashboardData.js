@@ -105,6 +105,7 @@ exports.getAscensosDescensosPorRuta = async (req, res) => {
       _sum: {
         ascensos: true,
         descensos: true,
+        ciudadanosfaltante: true,
       },
     });
 
@@ -134,6 +135,7 @@ exports.getAscensosDescensosPorRuta = async (req, res) => {
         ruta: nombreRuta,
         total_ascensos: item._sum.ascensos || 0,
         total_descensos: item._sum.descensos || 0,
+        total_sin_cupo: item._sum.ciudadanosfaltante || 0,
       };
     });
 
@@ -145,10 +147,12 @@ exports.getAscensosDescensosPorRuta = async (req, res) => {
             ruta: item.ruta,
             total_ascensos: 0,
             total_descensos: 0,
+            total_sin_cupo: 0,
           };
         }
         acc[item.ruta].total_ascensos += item.total_ascensos;
         acc[item.ruta].total_descensos += item.total_descensos;
+        acc[item.ruta].total_sin_cupo += item.total_sin_cupo;
         return acc;
       }, {})
     );

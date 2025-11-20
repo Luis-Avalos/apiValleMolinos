@@ -14,6 +14,7 @@ exports.getSubidasEstadisticas = async (req, res) => {
                     epp.regreso,
                     epp.ida,
                     bc.fecha_hora,
+                    bc.ciudadanosfaltante,
                     SUM(bc.ascensos) AS total_ascensos,
                     SUM(bc.descensos) AS total_descensos
                 FROM bitacora_cupos bc
@@ -22,7 +23,7 @@ exports.getSubidasEstadisticas = async (req, res) => {
                 WHERE epp.ruta IN ('EL ALAMO','VALLE','MIRADOR','SANTA LUCIA') 
                 OR bc.fk_estaciones IS NULL
                 GROUP BY 
-                    epp.gid, epp.nombre, epp.ruta,epp.regreso,epp.ida,bc.fecha_hora, bc.longitud, bc.latitud 
+                    epp.gid, epp.nombre, epp.ruta,epp.regreso,epp.ida,bc.fecha_hora, bc.longitud, bc.latitud, bc.ciudadanosfaltante
                 ORDER BY bc.fecha_hora DESC;
         `;
         // Convertir posibles BigInt para serializar 
@@ -37,6 +38,8 @@ exports.getSubidasEstadisticas = async (req, res) => {
             estacion: r.estacion,
             total_ascensos: Number(r.total_ascensos),
             total_descensos: Number(r.total_descensos),
+            ciudadanosfaltante: Number(r.ciudadanosfaltante),
+
         }));
 
         res.json(result); //enviamos los datos como JSON
@@ -57,6 +60,7 @@ exports.getBitacoraAgrupadaPorRuta = async (req, res) => {
         descensos: true,
         fecha_hora: true,
         latitud: true,        
+        ciudadanosfaltante: true,        
         longitud: true,       
         viajes: {
           select: {
@@ -81,7 +85,9 @@ exports.getBitacoraAgrupadaPorRuta = async (req, res) => {
       descensos: b.descensos,
       fecha_hora: b.fecha_hora,
       latitud: b.latitud,      
-      longitud: b.longitud,     
+      longitud: b.longitud, 
+      ciudadanosfaltante: b.ciudadanosfaltante,      
+
     }));
 
     const agrupado = Object.values(
@@ -98,6 +104,7 @@ exports.getBitacoraAgrupadaPorRuta = async (req, res) => {
           fecha_hora: r.fecha_hora,
           latitud: r.latitud,       
           longitud: r.longitud,     
+          ciudadanosfaltante: r.ciudadanosfaltante,     
         });
         return acc;
       }, {})

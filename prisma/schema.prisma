@@ -150,6 +150,7 @@ model bitacora_cupos {
   longitud      String                           @db.VarChar(50)
   ascensos      Int?                             @default(0)
   descensos     Int?                             @default(0)
+  ciudadanosfaltante   Int?                             @default(0)
   fecha_hora    DateTime?                        @default(now()) @db.Timestamp(6)
   fk_estaciones Int?
   viajes        viajes                           @relation("ViajeBitacoraCupos", fields: [viaje_id], references: [id], onDelete: Cascade)

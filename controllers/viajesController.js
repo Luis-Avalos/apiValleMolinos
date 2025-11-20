@@ -213,7 +213,7 @@ exports.getViajesConductor = async (req, res) => {
 
 
 /* ===============================
-    ACTUALIZAR VIAJE (mixto: Prisma + Node puro)
+    ACTUALIZAR VIAJE
    =============================== */
 exports.updateViaje = async (req, res) => {
   const client = await pool.connect();
@@ -233,6 +233,7 @@ exports.updateViaje = async (req, res) => {
       pasajeros_actuales,
       latitud,
       longitud,
+    ciudadanosfaltante 
     } = req.body;
 
     // Verifica existencia del viaje
@@ -285,24 +286,25 @@ exports.updateViaje = async (req, res) => {
       const anterior = Number(viajeActual.pasajeros_actuales) || 0;
       const diferencia = nuevosPasajeros - anterior;
 
-      console.log(
-        ` Pasajeros antes: ${anterior}, ahora: ${nuevosPasajeros}, diferencia: ${diferencia}`
-      );
+      const ascensos = diferencia > 0 ? diferencia : 0;
+      const descensos = diferencia < 0 ? Math.abs(diferencia) : 0;
 
+      const faltantes = ciudadanosfaltante ? Number(ciudadanosfaltante) : 0;
+    
+ // Si no hay cambios en pasajeros y tampoco faltantes  no se registra
       if (diferencia !== 0) {
-        const ascensos = diferencia > 0 ? diferencia : 0;
-        const descensos = diferencia < 0 ? Math.abs(diferencia) : 0;
+        
         const lat = parseFloat(latitud) || 0.0;
         const lon = parseFloat(longitud) || 0.0;
 
         const query = `
           INSERT INTO vallemolinostest.bitacora_cupos 
-          (viaje_id, latitud, longitud, ascensos, descensos, fecha_hora)
-          VALUES ($1, $2, $3, $4, $5, NOW())
+          (viaje_id, latitud, longitud, ascensos, descensos, ciudadanosfaltante, fecha_hora)
+          VALUES ($1, $2, $3, $4, $5, $6, NOW())
         `;
 
-        await client.query(query, [id, lat, lon, ascensos, descensos]);
-        console.log(' Bitácora insertada con Node puro');
+        await client.query(query, [id, lat, lon, ascensos, descensos, faltantes]);
+        console.log('Bitácora insertada con faltantes/ascensos/descensos');
       }
     }
 
@@ -314,6 +316,7 @@ exports.updateViaje = async (req, res) => {
     client.release();
   }
 };
+
 /* ===============================
    OBTENER BITÁCORA DE CUPOS
    =============================== */
