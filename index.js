@@ -3,39 +3,29 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const http = require('http');
-const https = require('https');
-const fs = require('fs');
 const { Server } = require('socket.io');
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// Cargar certificados SSL (ajusta las rutas a las reales en tu servidor)
-const httpsOptions = {
-  key: fs.readFileSync('/etc/ssl/zap.key'),
-  cert: fs.readFileSync('/etc/ssl/7cf9a40cef6759dc.crt'),
-  ca: fs.readFileSync('/etc/ssl/sf_bundle-g2-g1.crt'),
-};
 
-// Crear servidores HTTP y HTTPS
-const httpServer = http.createServer(app);
-const httpsServer = https.createServer(httpsOptions, app);
+const server = http.createServer(app);
 
-// Socket.IO sobre ambos
-const io = new Server(httpServer, { cors: { origin: "*" } });
-const ioHttps = new Server(httpsServer, { cors: { origin: "*" } });
 
-// Configurar ambos servidores Socket.IO
-io.on("connection", (socket) => console.log("Cliente HTTP conectado:", socket.id));
-ioHttps.on("connection", (socket) => console.log("Cliente HTTPS conectado:", socket.id));
+const io = new Server(server, {
+  cors: { origin: "*" }
+});
 
-// `io` principal disponible para tus controladores
-app.set("io", ioHttps);
+io.on("connection", (socket) => {
+  console.log("Cliente conectado:", socket.id);
+});
 
-// =======================
-// RUTAS DEL BACKEND
-// =======================
+app.set("io", io);
+
+// ==========================================
+// RUTAS
+// ==========================================
 const authRoutes = require('./routes/authRoutes');
 const passwordResetRoutes = require('./routes/passwordResetRoutes');
 const authRoutesCiudadano = require('./routes/authRoutesCiudadano');
@@ -50,7 +40,6 @@ const geotabRoutes = require('./routes/gpsEnvivo');
 const incidenciasRoutes = require('./routes/incidenciasRoutes');
 const dashboard = require('./routes/dashboard');
 
-// Registrar rutas
 app.use('/api/auth', authRoutes);
 app.use('/api', passwordResetRoutes);
 app.use('/api/auth', authRoutesCiudadano);
@@ -65,9 +54,9 @@ app.use('/api', geotabRoutes);
 app.use('/api/incidencias', incidenciasRoutes);
 app.use('/api/dashboard', dashboard);
 
-// =======================
-// RUTAS DE PRUEBA
-// =======================
+// ==========================================
+// Rutas de prueba
+// ==========================================
 app.get('/api/ping', (req, res) => {
   res.json({
     status: 'ok',
@@ -89,16 +78,5 @@ app.post('/api/test-post', (req, res) => {
   });
 });
 
-// =======================
-// INICIAR SERVIDORES
-// =======================
-const HTTP_PORT = process.env.PORT || 3004;
-const HTTPS_PORT = process.env.HTTPS_PORT || 3443;
-
-httpServer.listen(HTTP_PORT, () =>
-  console.log(`🌐 Servidor HTTP corriendo en http://localhost:${HTTP_PORT}`)
-);
-
-httpsServer.listen(HTTPS_PORT, () =>
-  console.log(` Servidor HTTPS corriendo en https://localhost:${HTTPS_PORT}`)
-);
+const PORT = process.env.PORT || 3004;
+server.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`));

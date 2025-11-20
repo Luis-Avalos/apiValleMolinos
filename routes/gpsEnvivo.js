@@ -81,8 +81,8 @@ async function obtenerVehiculosPorGrupo(groupId) {
     const unidad = await prisma.unidades.findFirst({
       where: { id_geotab: dev.id },
       include: {
-        viajes: {
-          where: { estado: { in: ["en_curso", "pendiente", "finalizado"] } },
+       viajes: {
+          where: { estado: "en_curso" },
           orderBy: { creado_en: "desc" },
           take: 1,
           include: { rutas: true }

@@ -80,15 +80,16 @@ model usuarios_ciudadanos {
   rol                 String?          @db.VarChar
   telefono_emergencia String?          @db.VarChar(50)
   domicilio           String?
-  edad                Int?
+  edad                String?          @db.VarChar
   carta_anuencia_url  String?
   updated_at          DateTime?        @default(now()) @db.Timestamp(6)
+  tyc                 Boolean?         @default(true)
   notificaciones      notificaciones[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model viajes {
-  id                        Int           @id @default(autoincrement())
+  id                        Int              @id @default(autoincrement())
   unidad_id                 Int?
   ruta_id                   Int?
   fecha                     DateTime         @db.Date
@@ -101,8 +102,8 @@ model viajes {
   creado_en                 DateTime?        @default(now()) @db.Timestamp(6)
   bitacora_cupos            bitacora_cupos[] @relation("ViajeBitacoraCupos")
   incidencias               incidencias[]
-  rutas                     rutas?        @relation(fields: [ruta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  unidades                  unidades?     @relation(fields: [unidad_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  rutas                     rutas?           @relation(fields: [ruta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  unidades                  unidades?        @relation(fields: [unidad_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   vueltas                   vueltas[]
 }
 
@@ -143,25 +144,24 @@ model incidencias {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model bitacora_cupos {
-  id            Int         @id(map: "bitacora_cupos_pk") @default(autoincrement())
+  id            Int                              @id(map: "bitacora_cupos_pk") @default(autoincrement())
   viaje_id      Int
-  latitud       String      @db.VarChar(50)
-  longitud      String      @db.VarChar(50)
-  ascensos      Int?        @default(0)
-  descensos     Int?        @default(0)
-  fecha_hora    DateTime?   @default(now()) @db.Timestamp(6)
+  latitud       String                           @db.VarChar(50)
+  longitud      String                           @db.VarChar(50)
+  ascensos      Int?                             @default(0)
+  descensos     Int?                             @default(0)
+  fecha_hora    DateTime?                        @default(now()) @db.Timestamp(6)
   fk_estaciones Int?
-  viajes        viajes      @relation("ViajeBitacoraCupos", fields: [viaje_id], references: [id], onDelete: Cascade)
-  estaciones    estaciones? @relation(fields: [fk_estaciones], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_bitacora_estaciones")
+  viajes        viajes                           @relation("ViajeBitacoraCupos", fields: [viaje_id], references: [id], onDelete: Cascade)
+  estaciones    estaciones_poligonos_produccion? @relation(fields: [fk_estaciones], references: [gid], onDelete: NoAction, onUpdate: NoAction, map: "fk_bitacora_estaciones")
 }
 
 model estaciones {
-  id             Int              @id @default(autoincrement())
-  nombre         String?          @db.VarChar(100)
-  lat            Decimal?         @db.Decimal(10, 6)
-  lng            Decimal?         @db.Decimal(10, 6)
-  ruta_asignada  String?          @db.VarChar(50)
-  bitacora_cupos bitacora_cupos[]
+  id            Int      @id @default(autoincrement())
+  nombre        String?  @db.VarChar(100)
+  lat           Decimal? @db.Decimal(10, 6)
+  lng           Decimal? @db.Decimal(10, 6)
+  ruta_asignada String?  @db.VarChar(50)
 }
 
 model estaciones_poligonos {
@@ -170,23 +170,32 @@ model estaciones_poligonos {
   geom        Unsupported("geometry")?
 }
 
-model estaciones_poligonos_export {
-  gid     Int                      @id @default(autoincrement())
-  name    String?                  @db.VarChar(254)
-  nombre  String?                  @db.VarChar(100)
-  ruta    String?                  @db.VarChar(50)
-  ida     Boolean?
-  regreso Boolean?
-  geom    Unsupported("geometry")?
-
-  @@index([geom], type: Gist)
-}
-
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model rutas_trazo {
-  gid    Int                      @id @default(autoincrement())
-  geom   Unsupported("geometry")?
-  nombre String?                  @db.VarChar(254)
+  gid     Int                      @id @default(autoincrement())
+  geom    Unsupported("geometry")?
+  nombre  String?                  @db.VarChar(254)
+  ida     Boolean?
+  regreso Boolean?
 
   @@index([geom], map: "sidx_rutas_trazo_geom", type: Gist)
+}
+
+model estaciones_poligonos_produccion {
+  gid            Int                      @id(map: "estaciones_poligonos_export_pkey") @default(autoincrement())
+  name           String?                  @db.VarChar(254)
+  nombre         String?                  @db.VarChar(100)
+  ruta           String?                  @db.VarChar(50)
+  ida            Boolean?
+  regreso        Boolean?
+  geom           Unsupported("geometry")?
+  bitacora_cupos bitacora_cupos[]
+
+  @@index([geom], map: "estaciones_poligonos_export_geom_idx", type: Gist)
+}
+
+model zona_resguardo {
+  gid  Int                      @id @default(autoincrement())
+  geom Unsupported("geometry")?
+  zona String?                  @db.VarChar(100)
 }

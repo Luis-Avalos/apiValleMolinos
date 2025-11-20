@@ -46,3 +46,66 @@ exports.getSubidasEstadisticas = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+exports.getBitacoraAgrupadaPorRuta = async (req, res) => {
+  try {
+    const bitacoras = await prisma.bitacora_cupos.findMany({
+      select: {
+        id: true,
+        viaje_id: true,
+        ascensos: true,
+        descensos: true,
+        fecha_hora: true,
+        latitud: true,        
+        longitud: true,       
+        viajes: {
+          select: {
+            ruta_id: true,
+            rutas: {
+              select: {
+                nombre: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { fecha_hora: 'desc' },
+    });
+
+    const registros = bitacoras.map(b => ({
+      bitacora_id: b.id,
+      viaje_id: b.viaje_id,
+      ruta_id: b.viajes?.ruta_id || null,
+      nombre_ruta: b.viajes?.rutas?.nombre || 'SIN RUTA',
+      ascensos: b.ascensos,
+      descensos: b.descensos,
+      fecha_hora: b.fecha_hora,
+      latitud: b.latitud,      
+      longitud: b.longitud,     
+    }));
+
+    const agrupado = Object.values(
+      registros.reduce((acc, r) => {
+        const nombre = r.nombre_ruta || 'SIN RUTA';
+        if (!acc[nombre]) {
+          acc[nombre] = { nombre_ruta: nombre, registros: [] };
+        }
+        acc[nombre].registros.push({
+          bitacora_id: r.bitacora_id,
+          viaje_id: r.viaje_id,
+          ascensos: r.ascensos,
+          descensos: r.descensos,
+          fecha_hora: r.fecha_hora,
+          latitud: r.latitud,       
+          longitud: r.longitud,     
+        });
+        return acc;
+      }, {})
+    );
+
+    res.json(agrupado);
+  } catch (error) {
+    console.error('Error al obtener bitácoras agrupadas:', error);
+    res.status(500).json({ error: 'Error al obtener bitácoras agrupadas por ruta' });
+  }
+};

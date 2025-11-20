@@ -108,7 +108,7 @@ exports.createCiudadano = [
             }
           }
         } else {
-          // 👇 Si no se enviaron archivos, usar URLs del body (por ejemplo desde Postman)
+          // Si no se enviaron archivos, usar URLs del body (por ejemplo desde Postman)
           if (req.body.foto_perfil_url) fotoUrl = req.body.foto_perfil_url;
           if (req.body.carta_anuencia_url) cartaUrl = req.body.carta_anuencia_url;
         }
@@ -123,7 +123,7 @@ exports.createCiudadano = [
           telefono,
           telefono_emergencia,
           domicilio,
-          edad: edad ? parseInt(edad) : null,
+          edad: edad ? String(edad) : null,
           password_hash: hashed,
           rol: "ciudadano",
           foto_perfil_url: fotoUrl,

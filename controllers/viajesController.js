@@ -71,9 +71,23 @@ exports.createViaje = async (req, res) => {
     } = req.body;
 
     if (!ruta_id || !fecha || !hora_inicio || !hora_fin) {
-      return res.status(400).json({ error: 'Faltan datos necesarios' });
+      return res.status(400).json({ error: "Faltan datos necesarios" });
     }
 
+    let conductorAsignadoId = conductor_id ? parseInt(conductor_id) : null;
+
+    // Si no se envía conductor_id, buscar el que tenga la unidad
+    if (!conductorAsignadoId && unidad_id) {
+      const unidad = await prisma.unidades.findUnique({
+        where: { id: parseInt(unidad_id) },
+        select: { conductor_id: true },
+      });
+      if (unidad?.conductor_id) {
+        conductorAsignadoId = unidad.conductor_id;
+      }
+    }
+
+    // Crear el viaje
     const viaje = await prisma.viajes.create({
       data: {
         ruta_id: parseInt(ruta_id),
@@ -81,7 +95,7 @@ exports.createViaje = async (req, res) => {
         hora_inicio: new Date(hora_inicio),
         hora_fin: new Date(hora_fin),
         unidad_id: unidad_id ? parseInt(unidad_id) : null,
-        estado: estado || 'pendiente',
+        estado: estado || "pendiente",
         total_vueltas_programadas: total_vueltas_programadas
           ? parseInt(total_vueltas_programadas)
           : 1,
@@ -92,18 +106,20 @@ exports.createViaje = async (req, res) => {
       },
     });
 
-    // Si se asigna conductor y unidad, actualiza conductor en unidad
-    if (conductor_id && unidad_id) {
+    //  Si hay conductor asignado y unidad, actualizar relación (solo si difiere)
+    if (conductorAsignadoId && unidad_id) {
       await prisma.unidades.update({
         where: { id: parseInt(unidad_id) },
-        data: { conductor_id: parseInt(conductor_id) },
+        data: { conductor_id: conductorAsignadoId },
       });
     }
 
     res.status(201).json(viaje);
   } catch (error) {
-    console.error('Error al crear viaje:', error);
-    res.status(500).json({ error: 'Error al crear viaje', details: error.message });
+    console.error("Error al crear viaje:", error);
+    res
+      .status(500)
+      .json({ error: "Error al crear viaje", details: error.message });
   }
 };
 

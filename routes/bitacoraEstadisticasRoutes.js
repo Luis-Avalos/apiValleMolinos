@@ -6,6 +6,6 @@ const authMiddleware = require('../middlewares/authMiddleware');
 
 
 router.get('/bitacora_estadisticas', authMiddleware,viajesController.getSubidasEstadisticas); 
-
+router.get('/bitacora_por_ruta', authMiddleware,viajesController.getBitacoraAgrupadaPorRuta); 
 
 module.exports = router;

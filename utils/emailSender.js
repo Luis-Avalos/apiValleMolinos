@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
 
 exports.sendResetCode = async (to, code) => {
     const mailOptions = {
-        from: '"Soporte Geomática" <soporte@zapopan.gob.mx>',
+        from: '"Camioncito Zapopan | Movilidad" <soporte@zapopan.gob.mx>',
         to,
         subject: "Código de recuperación de contraseña",
         html: `
@@ -311,8 +311,8 @@ exports.sendResetCode = async (to, code) => {
                                     role="none"
                                     style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:600px">
                                     <tr>
-                                        <td align="left" bgcolor="#DDFFE7"
-                                            style="Margin:0;padding-top:10px;padding-right:20px;padding-bottom:10px;padding-left:20px;background-color:#DDFFE7">
+                                        <td align="left" bgcolor="#ffffff"
+                                            style="Margin:0;padding-top:10px;padding-right:20px;padding-bottom:10px;padding-left:20px;background-color:#ffffff">
                                             <table cellpadding="0" cellspacing="0" width="100%" role="none"
                                                 style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
                                                 <tr>
@@ -324,7 +324,7 @@ exports.sendResetCode = async (to, code) => {
                                                             <tr>
                                                                 <td align="center"
                                                                     style="padding:0;Margin:0;padding-bottom:20px;font-size:0px">
-                                                                    <img src="https://s3.zapopan.gob.mx/geomatica/mucolonia/mailHeader.png"
+                                                                    <img src="https://s3.zapopan.gob.mx/geomatica/vmprofile/camioncito.png"
                                                                         alt="" width="560" title="Logo"
                                                                         class="adapt-img"
                                                                         style="display:block;font-size:12px;border:0;outline:none;text-decoration:none">
@@ -348,8 +348,8 @@ exports.sendResetCode = async (to, code) => {
                                     role="none"
                                     style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:#FFFFFF;width:600px">
                                     <tr>
-                                        <td align="left" bgcolor="#DDFFE7"
-                                            style="padding:0;Margin:0;background-color:#DDFFE7">
+                                        <td align="left" bgcolor="#ffffff"
+                                            style="padding:0;Margin:0;background-color:#ffffff">
                                             <table cellpadding="0" cellspacing="0" width="100%" role="none"
                                                 style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
                                                 <tr>
@@ -361,7 +361,7 @@ exports.sendResetCode = async (to, code) => {
                                                             <tr>
                                                                 <td align="center"
                                                                     style="padding:0;Margin:0;padding-bottom:10px;font-size:0">
-                                                                    <img src="https://s3.zapopan.gob.mx/geomatica/mucolonia/womanMail.png"
+                                                                    <img src="https://fpdtjni.stripocdn.email/content/guids/CABINET_5d9543e827a065c12d9b79a3da06bbaa662dffae34e3fbee6681ded4674e15b8/images/imagecc.png"
                                                                         alt="" width="190"
                                                                         style="display:block;font-size:14px;border:0;outline:none;text-decoration:none">
                                                                 </td>
@@ -434,12 +434,7 @@ exports.sendResetCode = async (to, code) => {
                                                                     <p
                                                                         style="Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px">
                                                                         <br></p>
-                                                                    <h6
-                                                                        style="Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:16px;font-style:normal;font-weight:normal;line-height:19.2px;color:#333333">
-                                                                        <a href="http://localhost/edicioncolonias/vistas/reset-password.html"
-                                                                            target="_blank"
-                                                                            style="mso-line-height-rule:exactly;text-decoration:underline;color:#5C68E2;font-size:16px">Enlace
-                                                                            para cambiar mi contraseña</a></h6>
+                                                                    
                                                                     <p
                                                                         style="Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;letter-spacing:0;color:#333333;font-size:14px">
                                                                         <br></p>
@@ -500,8 +495,8 @@ exports.sendResetCode = async (to, code) => {
                                     style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:600px"
                                     role="none">
                                     <tr>
-                                        <td align="left" bgcolor="#DDFFE7"
-                                            style="Margin:0;padding-right:20px;padding-left:20px;padding-bottom:20px;padding-top:20px;background-color:#DDFFE7">
+                                        <td align="left" bgcolor="#ffffff"
+                                            style="Margin:0;padding-right:20px;padding-left:20px;padding-bottom:20px;padding-top:20px;background-color:#ffffff">
                                             <table cellpadding="0" cellspacing="0" width="100%" role="none"
                                                 style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
                                                 <tr>
@@ -745,7 +740,7 @@ a[x-apple-data-detectors],
           <td align="center" class="es-stripe-html" style="padding:0;Margin:0">
            <table bgcolor="#ffffff" align="center" cellpadding="0" cellspacing="0" class="bf" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;background-color:#FFFFFF;width:600px">
              <tr>
-              <td align="left" bgcolor="#DDFFE7" style="padding:0;Margin:0">
+              <td align="left" bgcolor="#ffffff" style="padding:0;Margin:0">
                <table cellpadding="0" cellspacing="0" width="100%" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px">
                  <tr>
                   <td align="center" valign="top" style="padding:0;Margin:0;width:600px">
@@ -824,7 +819,11 @@ a[x-apple-data-detectors],
   line-height:28px;color:#333333;font-size:14px;text-align:center">
     <strong>Domicilio:</strong> ${domicilio}
   </p>
- 
+  <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
+  line-height:28px;color:#333333;font-size:14px;text-align:center">
+    <strong>Edad:</strong> ${edad}
+  </p>
+
   <!-- Mostrar foto solo si existe -->
   ${fotoUrl ? `
   <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
