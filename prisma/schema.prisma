@@ -43,12 +43,13 @@ model notificaciones {
 }
 
 model rutas {
-  id          Int       @id @default(autoincrement())
-  nombre      String    @db.VarChar(100)
-  descripcion String?
-  puntos_json Json?
-  creado_en   DateTime? @default(now()) @db.Timestamp(6)
-  viajes      viajes[]
+  id                          Int                           @id @default(autoincrement())
+  nombre                      String                        @db.VarChar(100)
+  descripcion                 String?
+  puntos_json                 Json?
+  creado_en                   DateTime?                     @default(now()) @db.Timestamp(6)
+  estaciones_poligonos_inicio estaciones_poligonos_inicio[]
+  viajes                      viajes[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -100,6 +101,7 @@ model viajes {
   pasajeros_actuales        Int?             @default(0)
   estado                    String?          @default("pendiente") @db.VarChar(20)
   creado_en                 DateTime?        @default(now()) @db.Timestamp(6)
+  fechainicioviaje          DateTime?        @db.Timestamptz(6)
   bitacora_cupos            bitacora_cupos[] @relation("ViajeBitacoraCupos")
   incidencias               incidencias[]
   rutas                     rutas?           @relation(fields: [ruta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -144,17 +146,17 @@ model incidencias {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model bitacora_cupos {
-  id            Int                              @id(map: "bitacora_cupos_pk") @default(autoincrement())
-  viaje_id      Int
-  latitud       String                           @db.VarChar(50)
-  longitud      String                           @db.VarChar(50)
-  ascensos      Int?                             @default(0)
-  descensos     Int?                             @default(0)
-  ciudadanosfaltante   Int?                             @default(0)
-  fecha_hora    DateTime?                        @default(now()) @db.Timestamp(6)
-  fk_estaciones Int?
-  viajes        viajes                           @relation("ViajeBitacoraCupos", fields: [viaje_id], references: [id], onDelete: Cascade)
-  estaciones    estaciones_poligonos_produccion? @relation(fields: [fk_estaciones], references: [gid], onDelete: NoAction, onUpdate: NoAction, map: "fk_bitacora_estaciones")
+  id                 Int                              @id(map: "bitacora_cupos_pk") @default(autoincrement())
+  viaje_id           Int
+  latitud            String                           @db.VarChar(50)
+  longitud           String                           @db.VarChar(50)
+  ascensos           Int?                             @default(0)
+  descensos          Int?                             @default(0)
+  fecha_hora         DateTime?                        @default(now()) @db.Timestamp(6)
+  fk_estaciones      Int?
+  ciudadanosfaltante Int?
+  viajes             viajes                           @relation("ViajeBitacoraCupos", fields: [viaje_id], references: [id], onDelete: Cascade)
+  estaciones         estaciones_poligonos_produccion? @relation(fields: [fk_estaciones], references: [gid], onDelete: NoAction, onUpdate: NoAction, map: "fk_bitacora_estaciones")
 }
 
 model estaciones {
@@ -190,6 +192,8 @@ model estaciones_poligonos_produccion {
   ida            Boolean?
   regreso        Boolean?
   geom           Unsupported("geometry")?
+  inicio         Int?
+  fk_estaciones  Int?                     @db.SmallInt
   bitacora_cupos bitacora_cupos[]
 
   @@index([geom], map: "estaciones_poligonos_export_geom_idx", type: Gist)
@@ -199,4 +203,53 @@ model zona_resguardo {
   gid  Int                      @id @default(autoincrement())
   geom Unsupported("geometry")?
   zona String?                  @db.VarChar(100)
+}
+
+model bitacora_cupos_1 {
+  id                 Int       @id(map: "bitacora_cupos_pk_1") @default(autoincrement())
+  viaje_id           Int
+  latitud            Float
+  longitud           Float
+  ascensos           Int?      @default(0)
+  descensos          Int?      @default(0)
+  fecha_hora         DateTime? @default(now()) @db.Timestamp(6)
+  fk_estaciones      Int?
+  ciudadanosfaltante Int?
+}
+
+model control_vueltas {
+  id_viaje             Int       @id
+  bandera_activa       Boolean?  @default(false)
+  ultima_actualizacion DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model estaciones_poligonos_inicio {
+  gid     Int                      @id @default(autoincrement())
+  nombre  String?                  @db.VarChar(100)
+  ruta    String?                  @db.VarChar(50)
+  ida     Boolean?
+  regreso Boolean?
+  geom    Unsupported("geometry")?
+  ruta_id Int?                     @db.SmallInt
+  rutas   rutas?                   @relation(fields: [ruta_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "estaciones_poligonos_inicio_fk")
+
+  @@index([geom], type: Gist)
+}
+
+model estaciones_poligonos_produccion_respaldo {
+  gid     Int                      @id
+  geom    Unsupported("geometry")?
+  name    String?                  @db.VarChar(254)
+  nombre  String?                  @db.VarChar(100)
+  ruta    String?                  @db.VarChar(50)
+  ida     Boolean?
+  regreso Boolean?
+}
+
+model rutas_trazo_respaldo_estaciones_virtuales {
+  gid     Int                      @id
+  geom    Unsupported("geometry")?
+  nombre  String?                  @db.VarChar(254)
+  ida     Boolean?
+  regreso Boolean?
 }

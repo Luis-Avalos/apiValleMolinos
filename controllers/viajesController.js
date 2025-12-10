@@ -2,6 +2,14 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { Pool } = require('pg');
 
+const { DateTime } = require("luxon");
+
+function toMexico(date) {
+  if (!date) return null;
+  return DateTime.fromJSDate(date, { zone: "utc" })
+    .setZone("America/Mexico_City")
+    .toISO(); 
+}
 
 const pool = new Pool({
   host: process.env.DB_HOST || '10.10.23.78',
@@ -38,7 +46,7 @@ exports.getViajeById = async (req, res) => {
     const id = Number(req.params.id);
     if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
 
-    const viaje = await prisma.viajes.findUnique({
+    let viaje = await prisma.viajes.findUnique({
       where: { id },
       include: {
         unidades: { include: { conductores: true } },
@@ -48,12 +56,18 @@ exports.getViajeById = async (req, res) => {
     });
 
     if (!viaje) return res.status(404).json({ error: 'Viaje no encontrado' });
+
+   
+    viaje = {
+      ...viaje,
+      fechainicioviaje: toMexico(viaje.fechainicioviaje),
+    };
+
     res.json(viaje);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener viaje', details: error.message });
   }
 };
-
 /* ===============================
     CREAR UN NUEVO VIAJE
    =============================== */
@@ -159,13 +173,15 @@ exports.iniciarViaje = async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
-
+    const fechaInicio = new Date();
     const viaje = await prisma.viajes.update({
       where: { id },
-      data: { estado: 'en_curso' },
+      data: { 
+        estado: 'en_curso',
+        fechainicioviaje: fechaInicio
+      },
       include: { unidades: { include: { conductores: true } }, rutas: true },
     });
-
     res.json(viaje);
   } catch (error) {
     res.status(500).json({ error: 'Error al iniciar viaje', details: error.message });
