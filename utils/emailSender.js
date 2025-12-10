@@ -784,7 +784,7 @@ a[x-apple-data-detectors],
   <h6 style="Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;
   letter-spacing:0;font-size:16px;font-style:normal;font-weight:normal;
   line-height:19.2px;color:#3d85c6">
-    <u><a href="https://mapa.zapopan.gob.mx/geomatica/pruebas/salidaweb/camioncito/landing/login.html" target="_blank"
+    <u><a href="https://camioncito.zapopan.gob.mx/landing/login.html" target="_blank"
     style="text-decoration:underline;color:#3d85c6;font-size:16px">
     Enlace para iniciar sesión
     </a></u>
@@ -819,10 +819,7 @@ a[x-apple-data-detectors],
   line-height:28px;color:#333333;font-size:14px;text-align:center">
     <strong>Domicilio:</strong> ${domicilio}
   </p>
-  <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
-  line-height:28px;color:#333333;font-size:14px;text-align:center">
-    <strong>Edad:</strong> ${edad}
-  </p>
+
 
   <!-- Mostrar foto solo si existe -->
   ${fotoUrl ? `
