@@ -167,7 +167,7 @@ exports.getTotalPorVuelta = async (req, res) => {
   try {
     //  Agrupar  ascensos y descensos por viaje_id
     const agrupadoPorViaje = await prisma.viajes.groupBy({
-      by: ['ruta_id'],
+      by: ['ruta_id', 'fecha'], 
       _sum: {
         vueltas_completadas: true,
       },
@@ -194,6 +194,7 @@ exports.getTotalPorVuelta = async (req, res) => {
     const ruta = viajesConRuta.find(r => r.id === item.ruta_id); 
     return {
       ruta: ruta?.nombre || 'Ruta no encontrada',
+       fecha: item.fecha,
       vueltas_completadas: item._sum.vueltas_completadas || 0,
     };
   });
@@ -205,6 +206,7 @@ exports.getTotalPorVuelta = async (req, res) => {
         if (!acc[item.ruta]) {
           acc[item.ruta] = {
             ruta: item.ruta,
+             fecha: item.fecha,
             vueltas_completadas: 0,
           };
         }
