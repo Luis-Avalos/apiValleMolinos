@@ -2,7 +2,6 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 // ASCENSOS / DESCENSOS
-
 exports.getAllSubidasbajadas = async (req, res) => {
   try {
     const result = await prisma.bitacora_cupos.aggregate({
@@ -94,9 +93,7 @@ exports.getViajesStats = async (req, res) => {
   }
 };
 
-
 // TOTAL DE ASCENSOS Y DESCENSOS POR RUTA
-
 exports.getAscensosDescensosPorRuta = async (req, res) => {
   try {
     //  Agrupar  ascensos y descensos por viaje_id
@@ -160,6 +157,65 @@ exports.getAscensosDescensosPorRuta = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       error: 'Error al obtener la info de ascensos y descensos por ruta',
+      details: error.message,
+    });
+  }
+};
+
+// TOTAL DE VUELTAS POR RUTA
+exports.getTotalPorVuelta = async (req, res) => {
+  try {
+    //  Agrupar  ascensos y descensos por viaje_id
+    const agrupadoPorViaje = await prisma.viajes.groupBy({
+      by: ['ruta_id'],
+      _sum: {
+        vueltas_completadas: true,
+      },
+    });
+
+    // Si no hay data devolvemos vacío
+    if (agrupadoPorViaje.length === 0) {
+      return res.json({ data: [] });
+    }
+
+    //nombres de rutas de cada viaje
+    const viajesConRuta = await prisma.rutas.findMany({
+      where: {
+        id: { in: agrupadoPorViaje.map(v => v.ruta_id) },
+      },
+      select: {
+        id: true,
+        nombre: true ,
+      },
+    });
+
+    // Información del viaje con ruta y su info 
+    const resultados = agrupadoPorViaje.map(item => {
+    const ruta = viajesConRuta.find(r => r.id === item.ruta_id); 
+    return {
+      ruta: ruta?.nombre || 'Ruta no encontrada',
+      vueltas_completadas: item._sum.vueltas_completadas || 0,
+    };
+  });
+
+
+    // Agrupamos nombre ruta 
+    const resumenPorRuta = Object.values(
+      resultados.reduce((acc, item) => {
+        if (!acc[item.ruta]) {
+          acc[item.ruta] = {
+            ruta: item.ruta,
+            vueltas_completadas: 0,
+          };
+        }
+        acc[item.ruta].vueltas_completadas += item.vueltas_completadas;
+        return acc;
+      }, {})
+    );
+    res.json({ data: resumenPorRuta });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Error al obtener la info de vueltas por ruta',
       details: error.message,
     });
   }
