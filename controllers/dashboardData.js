@@ -224,3 +224,46 @@ exports.getTotalPorVuelta = async (req, res) => {
     });
   }
 };
+
+exports.addVueltaManual = async (req, res) => {
+  try {
+    const viajeId = Number(req.params.id);
+    const conductorId = req.body.conductor_id;
+
+    if (isNaN(viajeId)) {
+      return res.status(400).json({ error: 'ID de viaje inválido' });
+    }
+
+    const viaje = await prisma.viajes.findUnique({
+      where: { id: viajeId }
+    });
+
+    if (!viaje) {
+      return res.status(404).json({ error: 'Viaje no encontrado' });
+    }
+
+    if (viaje.estado !== 'en_curso') {
+      return res.status(400).json({ error: 'El viaje no está en curso' });
+    }
+
+    const actualizado = await prisma.viajes.update({
+      where: { id: viajeId },
+      data: {
+        vueltascompletadasmanual: { increment: 1 }
+      }
+    });
+
+    res.json({
+      id: actualizado.id,
+      vueltascompletadasmanual: actualizado.vueltascompletadasmanual
+    });
+
+  } catch (error) {
+    console.error('Error addVueltaManual:', error);
+    res.status(500).json({
+      error: 'Error al registrar vuelta manual',
+      details: error.message
+    });
+  }
+};
+
