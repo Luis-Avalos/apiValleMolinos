@@ -11,7 +11,6 @@ function generateCode(length = 6) {
 exports.requestReset = async (req, res) => {
   try {
     const { email } = req.body;
-
     // Buscar primero en conductores, luego en ciudadanos
     const user =
       (await prisma.conductores.findUnique({ where: { email } })) ||
@@ -42,9 +41,7 @@ exports.verifyCode = async (req, res) => {
     const record = await prisma.password_resets_conductores.findFirst({
       where: { email, codigo, used: false, expires_at: { gt: new Date() } },
     });
-
     if (!record) return res.status(400).json({ error: 'Código inválido o expirado' });
-
     res.json({ message: 'Código válido' });
   } catch (error) {
     console.error('Error en verifyCode:', error);

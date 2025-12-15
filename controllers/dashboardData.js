@@ -10,7 +10,6 @@ exports.getAllSubidasbajadas = async (req, res) => {
         descensos: true
       }
     });
-
     res.json({
       total_ascensos: result._sum.ascensos || 0,
       total_descensos: result._sum.descensos || 0
@@ -27,7 +26,6 @@ exports.getAllSubidasbajadas = async (req, res) => {
 exports.getUnidadesStats = async (req, res) => {
   try {
     const total = await prisma.unidades.count();
-
     const estados = await prisma.unidades.groupBy({
       by: ['estado'],
       _count: { estado: true }
@@ -170,6 +168,7 @@ exports.getTotalPorVuelta = async (req, res) => {
       by: ['ruta_id', 'fecha'], 
       _sum: {
         vueltas_completadas: true,
+        vueltascompletadasmanual: true,
       },
     });
 
@@ -196,6 +195,7 @@ exports.getTotalPorVuelta = async (req, res) => {
       ruta: ruta?.nombre || 'Ruta no encontrada',
        fecha: item.fecha,
       vueltas_completadas: item._sum.vueltas_completadas || 0,
+      vueltascompletadasmanual: item._sum.vueltascompletadasmanual || 0,
     };
   });
 
@@ -208,9 +208,11 @@ exports.getTotalPorVuelta = async (req, res) => {
             ruta: item.ruta,
              fecha: item.fecha,
             vueltas_completadas: 0,
+            vueltascompletadasmanual: 0,
           };
         }
         acc[item.ruta].vueltas_completadas += item.vueltas_completadas;
+        acc[item.ruta].vueltascompletadasmanual += item.vueltascompletadasmanual;
         return acc;
       }, {})
     );
