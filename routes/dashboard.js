@@ -11,5 +11,5 @@ router.get('/ascdesc', authMiddleware,dashboard.getAscensosDescensosPorRuta);
 router.get('/totalvueltas', authMiddleware,dashboard.getTotalPorVuelta);
 router.post('/viajes/:id/vuelta-manual',authMiddleware,dashboard.addVueltaManual);
 
-
 module.exports = router;
+

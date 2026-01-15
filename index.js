@@ -53,6 +53,7 @@ app.use('/api/vueltas', vueltasRoutes);
 app.use('/api', geotabRoutes);
 app.use('/api/incidencias', incidenciasRoutes);
 app.use('/api/dashboard', dashboard);
+app.use('/api/notificaciones', require('./routes/notificacionesRoutes'));
 
 // ==========================================
 // Rutas de prueba
