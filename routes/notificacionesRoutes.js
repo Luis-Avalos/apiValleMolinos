@@ -5,6 +5,6 @@ const { crearNotificacion,  getNotificaciones } = require('../controllers/notifi
 const router = express.Router();
 
 router.post('/', crearNotificacion);
-router.get('/:usuario_id', getNotificaciones);
+router.get('/', getNotificaciones);
 
 module.exports = router;
