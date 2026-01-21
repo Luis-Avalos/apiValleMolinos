@@ -62,10 +62,10 @@ const crearNotificacionweb = async (req, res) => {
     }
 
     const query = `
-      INSERT INTO vallemolinostest.notificacionesweb
-      (titulo, mensaje)
-      VALUES ($1, $2)
-      RETURNING *;
+    INSERT INTO vallemolinostest.notificacionesweb
+    (titulo, mensaje, activo)
+    VALUES ($1, $2, false)
+    RETURNING *;
     `;
 
     const result = await pool.query(query, [titulo, mensaje]);
@@ -82,6 +82,37 @@ const crearNotificacionweb = async (req, res) => {
     res.status(500).json({ error: 'Error del servidor' });
   }
 };
+
+const activarNotificacionWeb = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Desactivar todas
+    await pool.query(`
+      UPDATE vallemolinostest.notificacionesweb
+      SET activo = false;
+    `);
+
+    // Activar solo la seleccionada
+    const result = await pool.query(`
+      UPDATE vallemolinostest.notificacionesweb
+      SET activo = true
+      WHERE id = $1
+      RETURNING *;
+    `, [id]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Notificación no encontrada" });
+    }
+
+    res.json(result.rows[0]);
+
+  } catch (error) {
+    console.error("Error al activar notificación:", error);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+};
+
 
 const getNotificacionesweb = async (req, res) => {
   try {
@@ -102,5 +133,6 @@ module.exports = {
   crearNotificacion,
   getNotificaciones,
   getNotificacionesweb,
-  crearNotificacionweb
+  crearNotificacionweb,
+  activarNotificacionWeb
 };
