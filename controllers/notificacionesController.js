@@ -140,6 +140,24 @@ const desactivarNotificacionWeb = async (req, res) => {
 };
 
 
+const obtenerNotificacionActiva = async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT *
+      FROM vallemolinostest.notificacionesweb
+      WHERE activo = true
+      LIMIT 1;
+    `);
+
+    res.json(result.rows[0] || null);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+};
+
+
 const getNotificacionesweb = async (req, res) => {
   try {
     const result = await pool.query(`
@@ -161,5 +179,6 @@ module.exports = {
   getNotificacionesweb,
   crearNotificacionweb,
   activarNotificacionWeb,
-  desactivarNotificacionWeb
+  desactivarNotificacionWeb,
+  obtenerNotificacionActiva
 };
