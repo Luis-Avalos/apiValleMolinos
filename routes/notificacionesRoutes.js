@@ -7,7 +7,7 @@ router.post('/', crearNotificacion);
 router.get('/', getNotificaciones);
 
 router.post('/web', crearNotificacionweb);
-router.post('/web/:id/activar', activarNotificacionWeb)
+router.put('/web/:id/activar', activarNotificacionWeb)
 router.get('/web', getNotificacionesweb);
 
 module.exports = router;
