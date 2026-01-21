@@ -71,11 +71,7 @@ const crearNotificacionweb = async (req, res) => {
     const result = await pool.query(query, [titulo, mensaje]);
     const notificacion = result.rows[0];
 
-    const io = req.app.get('io');
-    if (io) {
-      io.emit('nueva_notificacion', notificacion);
-    }
-
+   
     res.json(notificacion);
   } catch (error) {
     console.error('Error al crear notificación:', error);
@@ -93,7 +89,7 @@ const activarNotificacionWeb = async (req, res) => {
       SET activo = false;
     `);
 
-    // Activar solo la seleccionada
+    // Activar la seleccionada
     const result = await pool.query(`
       UPDATE vallemolinostest.notificacionesweb
       SET activo = true
@@ -105,10 +101,40 @@ const activarNotificacionWeb = async (req, res) => {
       return res.status(404).json({ error: "Notificación no encontrada" });
     }
 
-    res.json(result.rows[0]);
+    const notificacionActiva = result.rows[0];
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('notificacion_activa', notificacionActiva);
+    }
+
+    res.json(notificacionActiva);
 
   } catch (error) {
     console.error("Error al activar notificación:", error);
+    res.status(500).json({ error: "Error del servidor" });
+  }
+};
+
+const desactivarNotificacionWeb = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await pool.query(`
+      UPDATE vallemolinostest.notificacionesweb
+      SET activo = false
+      WHERE id = $1;
+    `, [id]);
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('notificacion_activa', null);
+    }
+
+    res.json({ ok: true });
+
+  } catch (error) {
+    console.error("Error al desactivar notificación:", error);
     res.status(500).json({ error: "Error del servidor" });
   }
 };
@@ -134,5 +160,6 @@ module.exports = {
   getNotificaciones,
   getNotificacionesweb,
   crearNotificacionweb,
-  activarNotificacionWeb
+  activarNotificacionWeb,
+  desactivarNotificacionWeb
 };
