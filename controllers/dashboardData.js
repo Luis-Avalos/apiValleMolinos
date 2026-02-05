@@ -96,7 +96,7 @@ exports.getAscensosDescensosPorRuta = async (req, res) => {
   try {
     //  Agrupar  ascensos y descensos por viaje_id
     const agrupadoPorViaje = await prisma.bitacora_cupos.groupBy({
-      by: ['viaje_id', 'fecha'],
+      by: ['viaje_id'],
       _sum: {
         ascensos: true,
         descensos: true,
@@ -161,69 +161,7 @@ exports.getAscensosDescensosPorRuta = async (req, res) => {
 };
 
 // TOTAL DE VUELTAS POR RUTA
-// exports.getTotalPorVuelta = async (req, res) => {
-//   try {
-//     //  Agrupar  ascensos y descensos por viaje_id
-//     const agrupadoPorViaje = await prisma.viajes.groupBy({
-//       by: ['ruta_id', 'fecha'], 
-//       _sum: {
-//         vueltas_completadas: true,
-//         vueltascompletadasmanual: true,
-//       },
-//     });
 
-//     // Si no hay data devolvemos vacío
-//     if (agrupadoPorViaje.length === 0) {
-//       return res.json({ data: [] });
-//     }
-
-//     //nombres de rutas de cada viaje
-//     const viajesConRuta = await prisma.rutas.findMany({
-//       where: {
-//         id: { in: agrupadoPorViaje.map(v => v.ruta_id) },
-//       },
-//       select: {
-//         id: true,
-//         nombre: true ,
-//       },
-//     });
-
-//     // Información del viaje con ruta y su info 
-//     const resultados = agrupadoPorViaje.map(item => {
-//     const ruta = viajesConRuta.find(r => r.id === item.ruta_id); 
-//     return {
-//       ruta: ruta?.nombre || 'Ruta no encontrada',
-//        fecha: item.fecha,
-//       vueltas_completadas: item._sum.vueltas_completadas || 0,
-//       vueltascompletadasmanual: item._sum.vueltascompletadasmanual || 0,
-//     };
-//   });
-
-
-//     // Agrupamos nombre ruta 
-//     const resumenPorRuta = Object.values(
-//       resultados.reduce((acc, item) => {
-//         if (!acc[item.ruta]) {
-//           acc[item.ruta] = {
-//             ruta: item.ruta,
-//              fecha: item.fecha,
-//             vueltas_completadas: 0,
-//             vueltascompletadasmanual: 0,
-//           };
-//         }
-//         acc[item.ruta].vueltas_completadas += item.vueltas_completadas;
-//         acc[item.ruta].vueltascompletadasmanual += item.vueltascompletadasmanual;
-//         return acc;
-//       }, {})
-//     );
-//     res.json({ data: resumenPorRuta });
-//   } catch (error) {
-//     res.status(500).json({
-//       error: 'Error al obtener la info de vueltas por ruta',
-//       details: error.message,
-//     });
-//   }
-// };
 // TOTAL DE VUELTAS POR RUTA
 exports.getTotalPorVuelta = async (req, res) => {
   try {
