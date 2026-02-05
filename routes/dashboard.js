@@ -8,5 +8,8 @@ router.get('/unidadesstats', authMiddleware,dashboard.getUnidadesStats);
 router.get('/conductoresstats', authMiddleware,dashboard.getConductoresStats);
 router.get('/viajesstats', authMiddleware,dashboard.getViajesStats);
 router.get('/ascdesc', authMiddleware,dashboard.getAscensosDescensosPorRuta);
+router.get('/totalvueltas', authMiddleware,dashboard.getTotalPorVuelta);
+router.post('/viajes/:id/vuelta-manual',authMiddleware,dashboard.addVueltaManual);
 
 module.exports = router;
+

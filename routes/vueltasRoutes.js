@@ -11,3 +11,4 @@ router.put('/:id', authMiddleware,vueltasController.updateVuelta);
 router.delete('/:id', authMiddleware,vueltasController.deleteVuelta);
 
 module.exports = router;
+  

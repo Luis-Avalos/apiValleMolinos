@@ -102,6 +102,7 @@ model viajes {
   estado                    String?          @default("pendiente") @db.VarChar(20)
   creado_en                 DateTime?        @default(now()) @db.Timestamp(6)
   fechainicioviaje          DateTime?        @db.Timestamptz(6)
+  vueltascompletadasmanual  Int?             @default(0)
   bitacora_cupos            bitacora_cupos[] @relation("ViajeBitacoraCupos")
   incidencias               incidencias[]
   rutas                     rutas?           @relation(fields: [ruta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -205,18 +206,6 @@ model zona_resguardo {
   zona String?                  @db.VarChar(100)
 }
 
-model bitacora_cupos_1 {
-  id                 Int       @id(map: "bitacora_cupos_pk_1") @default(autoincrement())
-  viaje_id           Int
-  latitud            Float
-  longitud           Float
-  ascensos           Int?      @default(0)
-  descensos          Int?      @default(0)
-  fecha_hora         DateTime? @default(now()) @db.Timestamp(6)
-  fk_estaciones      Int?
-  ciudadanosfaltante Int?
-}
-
 model control_vueltas {
   id_viaje             Int       @id
   bandera_activa       Boolean?  @default(false)
@@ -252,4 +241,11 @@ model rutas_trazo_respaldo_estaciones_virtuales {
   nombre  String?                  @db.VarChar(254)
   ida     Boolean?
   regreso Boolean?
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model v_estacion {
+  fk_estaciones Int? @db.SmallInt
+
+  @@ignore
 }
