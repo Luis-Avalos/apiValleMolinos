@@ -33,17 +33,25 @@ async function subirAS3(file, userId, folder = 'conductores') {
 }
 
 
-// Obtener todos los conductores
+// Obtener todos los conductores activos
 exports.getAllConductores = async (req, res) => {
   try {
     const conductores = await prisma.conductores.findMany({
-      include: { unidades: true } // opcional, si quieres traer también las unidades relacionadas
+      where: {
+        estatus: true
+      },
+      include: { unidades: true }
     });
+
     res.json(conductores);
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener conductores', details: error.message });
+    res.status(500).json({ 
+      error: 'Error al obtener conductores', 
+      details: error.message 
+    });
   }
 };
+
 
 // Obtener conductor por ID
 exports.getConductorById = async (req, res) => {
@@ -140,19 +148,22 @@ exports.updateConductor = [
   }
 ];
 
-
 // Eliminar conductor
 exports.deleteConductor = async (req, res) => {
   try {
-    await prisma.conductores.delete({
-      where: { id: Number(req.params.id) }
+    await prisma.conductores.update({
+      where: { id: Number(req.params.id) },
+      data: { estatus: false }
     });
-    res.json({ message: 'Conductor eliminado' });
+
+    res.json({ message: 'Conductor dado de baja correctamente' });
   } catch (error) {
-    res.status(500).json({ error: 'Error al eliminar conductor', details: error.message });
+    res.status(500).json({ 
+      error: 'Error al dar de baja conductor', 
+      details: error.message 
+    });
   }
 };
-
 
 //Solo actualizar foto de perfil
 exports.uploadFotoPerfilConductor = [

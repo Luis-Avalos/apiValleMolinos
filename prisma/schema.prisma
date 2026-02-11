@@ -18,6 +18,7 @@ model conductores {
   foto_perfil_url String?
   fecha_registro  DateTime?     @default(now()) @db.Timestamp(6)
   rol             String?       @db.VarChar
+  estatus         Boolean       @default(true)
   incidencias     incidencias[]
   unidades        unidades[]
 }
@@ -33,13 +34,10 @@ model historial_pasajeros {
 }
 
 model notificaciones {
-  id                  Int                  @id @default(autoincrement())
-  usuario_id          Int?
-  titulo              String               @db.VarChar(200)
-  mensaje             String
-  leido               Boolean?             @default(false)
-  fecha               DateTime?            @default(now()) @db.Timestamp(6)
-  usuarios_ciudadanos usuarios_ciudadanos? @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id      Int       @id @default(autoincrement())
+  titulo  String    @db.VarChar(200)
+  mensaje String
+  fecha   DateTime? @default(now()) @db.Timestamp(6)
 }
 
 model rutas {
@@ -69,23 +67,22 @@ model unidades {
 }
 
 model usuarios_ciudadanos {
-  id                  Int              @id @default(autoincrement())
-  nombre              String           @db.VarChar(100)
-  apellido            String           @db.VarChar(100)
-  curp                String           @unique @db.VarChar(18)
-  email               String           @unique @db.VarChar(150)
-  telefono            String?          @unique @db.VarChar(15)
+  id                  Int       @id @default(autoincrement())
+  nombre              String    @db.VarChar(100)
+  apellido            String    @db.VarChar(100)
+  curp                String    @unique @db.VarChar(18)
+  email               String    @unique @db.VarChar(150)
+  telefono            String?   @unique @db.VarChar(15)
   password_hash       String
   foto_perfil_url     String?
-  fecha_registro      DateTime?        @default(now()) @db.Timestamp(6)
-  rol                 String?          @db.VarChar
-  telefono_emergencia String?          @db.VarChar(50)
+  fecha_registro      DateTime? @default(now()) @db.Timestamp(6)
+  rol                 String?   @db.VarChar
+  telefono_emergencia String?   @db.VarChar(50)
   domicilio           String?
-  edad                String?          @db.VarChar
+  edad                String?   @db.VarChar
   carta_anuencia_url  String?
-  updated_at          DateTime?        @default(now()) @db.Timestamp(6)
-  tyc                 Boolean?         @default(true)
-  notificaciones      notificaciones[]
+  updated_at          DateTime? @default(now()) @db.Timestamp(6)
+  tyc                 Boolean?  @default(true)
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -248,4 +245,12 @@ model v_estacion {
   fk_estaciones Int? @db.SmallInt
 
   @@ignore
+}
+
+model notificacionesweb {
+  id      Int       @id(map: "notificaciones_pkey_1") @default(autoincrement())
+  titulo  String    @db.VarChar(200)
+  mensaje String
+  fecha   DateTime? @default(now()) @db.Timestamp(6)
+  activo  Boolean   @default(false)
 }

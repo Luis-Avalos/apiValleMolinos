@@ -31,7 +31,6 @@ async function subirAS3(file, email) {
   };
 
   const result = await s3.upload(params).promise();
-
   // URL final accesible públicamente
   return `${process.env.AWS_URL}/${process.env.AWS_BUCKET}/${key}`;
 }
