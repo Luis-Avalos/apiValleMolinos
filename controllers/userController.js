@@ -46,7 +46,6 @@ exports.getAllConductores = async (req, res) => {
     res.json(conductores);
   } catch (error) {
     res.status(500).json({ 
-      error: 'Error al obtener conductores', 
       details: error.message 
     });
   }
