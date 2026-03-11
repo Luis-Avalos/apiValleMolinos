@@ -16,6 +16,8 @@ const s3 = new AWS.S3({
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   endpoint: new AWS.Endpoint(process.env.AWS_URL),
   s3ForcePathStyle: true,
+  signatureVersion: "v4",
+  region: "us-east-1"
 });
 
 // Función  para subir a S3
@@ -27,20 +29,46 @@ async function subirAS3(file, email) {
     Key: key,
     Body: file.buffer,
     ContentType: file.mimetype,
-    ACL: 'public-read',
   };
 
-  const result = await s3.upload(params).promise();
-  // URL final accesible públicamente
-  return `${process.env.AWS_URL}/${process.env.AWS_BUCKET}/${key}`;
+  await s3.upload(params).promise();
+  return key; 
+}
+
+function generarUrlFirmada(key) {
+
+  if (key.startsWith("http")) {
+    const url = new URL(key);
+    key = url.pathname.replace(`/${process.env.AWS_BUCKET}/`, "");
+  }
+
+  const params = {
+    Bucket: process.env.AWS_BUCKET,
+    Key: key,
+    Expires: 60 * 60 * 4
+  };
+
+  return s3.getSignedUrl("getObject", params);
 }
 
 
 // --- Obtener todos los ciudadanos
 exports.getAllCiudadanos = async (req, res) => {
   try {
-    const ciudadanos = await prisma.usuarios_ciudadanos.findMany();
-    res.json(ciudadanos);
+const ciudadanos = await prisma.usuarios_ciudadanos.findMany();
+
+const ciudadanosConUrl = ciudadanos.map(c => ({
+  ...c,
+  foto_perfil_url: c.foto_perfil_url
+    ? generarUrlFirmada(c.foto_perfil_url)
+    : null,
+  carta_anuencia_url: c.carta_anuencia_url
+    ? generarUrlFirmada(c.carta_anuencia_url)
+    : null
+}));
+
+res.json(ciudadanosConUrl);
+
   } catch (error) {
     console.error('Error en getAllCiudadanos:', error);
     res.status(500).json({ error: 'Error al obtener ciudadanos', details: error.message });
@@ -51,10 +79,23 @@ exports.getAllCiudadanos = async (req, res) => {
 exports.getCiudadanoById = async (req, res) => {
   try {
     const ciudadano = await prisma.usuarios_ciudadanos.findUnique({
-      where: { id: Number(req.params.id) },
-    });
-    if (!ciudadano) return res.status(404).json({ error: 'Ciudadano no encontrado' });
-    res.json(ciudadano);
+  where: { id: Number(req.params.id) },
+});
+
+if (!ciudadano) return res.status(404).json({ error: 'Ciudadano no encontrado' });
+
+const ciudadanoConUrl = {
+  ...ciudadano,
+  foto_perfil_url: ciudadano.foto_perfil_url
+    ? generarUrlFirmada(ciudadano.foto_perfil_url)
+    : null,
+  carta_anuencia_url: ciudadano.carta_anuencia_url
+    ? generarUrlFirmada(ciudadano.carta_anuencia_url)
+    : null
+};
+
+res.json(ciudadanoConUrl);
+
   } catch (error) {
     console.error('Error en getCiudadanoById:', error);
     res.status(500).json({ error: 'Error al obtener ciudadano', details: error.message });

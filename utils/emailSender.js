@@ -188,7 +188,6 @@ exports.sendResetCode = async (to, code) => {
             .bc h6 a {
                 font-size: 16px !important
             }
-
             .bd p,
             .bd a {
                 font-size: 16px !important

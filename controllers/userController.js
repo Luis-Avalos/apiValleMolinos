@@ -1,53 +1,88 @@
-const prisma = require('../models/userModel'); // importa tu prisma client
+const prisma = require('../models/userModel');
 const bcrypt = require('bcrypt');
 
 const multer = require('multer');
 const AWS = require('aws-sdk');
 
-// Configuración de Multer (archivos en memoria)
+// Multer en memoria
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// Configuración de AWS S3
+// Configuración S3
+
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   endpoint: new AWS.Endpoint(process.env.AWS_URL),
   s3ForcePathStyle: true,
+  signatureVersion: "v4",
+  region: "us-east-1"
 });
 
-// Función auxiliar para subir a S3
-async function subirAS3(file, userId, folder = 'conductores') {
-  const fileName = `vmprofile/${folder}/${userId}/${file.originalname}`;
+
+// Subir archivo a S3
+async function subirAS3(file, email) {
+
+  const nombreLimpio = limpiarNombreArchivo(file.originalname);
+
+  const key = `vmprofile/conductores/${email}/${nombreLimpio}`;
+  const params = {
+    Bucket: process.env.AWS_BUCKET,
+    Key: key,
+    Body: file.buffer,
+    ContentType: file.mimetype
+  };
+
+  await s3.upload(params).promise();
+
+  return key;
+}
+
+
+// Generar URL firmada
+function generarUrlFirmada(key) {
+
+  if (key.startsWith("http")) {
+    key = key.split(`${process.env.AWS_BUCKET}/`)[1];
+  }
 
   const params = {
     Bucket: process.env.AWS_BUCKET,
-    Key: fileName,
-    Body: file.buffer,
-    ContentType: file.mimetype,
-    ACL: 'public-read',
+    Key: key,
+    Expires: 60 * 60 * 4
   };
 
-  const uploadResult = await s3.upload(params).promise();
-  return uploadResult.Location; // URL pública
+  return s3.getSignedUrl("getObject", params);
 }
 
+function limpiarNombreArchivo(nombre) {
+  const ext = nombre.split(".").pop();
+
+  return `${Date.now()}-${Math.random().toString(36).substring(2,8)}.${ext}`;
+}
 
 // Obtener todos los conductores activos
 exports.getAllConductores = async (req, res) => {
   try {
+
     const conductores = await prisma.conductores.findMany({
-      where: {
-        estatus: true
-      },
+      where: { estatus: true },
       include: { unidades: true }
     });
 
-    res.json(conductores);
+    const conductoresConUrl = conductores.map(c => ({
+      ...c,
+      foto_perfil_url: c.foto_perfil_url
+        ? generarUrlFirmada(c.foto_perfil_url)
+        : null
+    }));
+
+    res.json(conductoresConUrl);
+
   } catch (error) {
-    res.status(500).json({ 
-      details: error.message 
-    });
+    res.status(500).json({ details: error.message });
   }
 };
 
@@ -55,54 +90,75 @@ exports.getAllConductores = async (req, res) => {
 // Obtener conductor por ID
 exports.getConductorById = async (req, res) => {
   try {
+
     const conductor = await prisma.conductores.findUnique({
       where: { id: Number(req.params.id) },
       include: { unidades: true }
     });
-    if (!conductor) return res.status(404).json({ error: 'Conductor no encontrado' });
-    res.json(conductor);
+
+    if (!conductor)
+      return res.status(404).json({ error: 'Conductor no encontrado' });
+
+    const conductorConUrl = {
+      ...conductor,
+      foto_perfil_url: conductor.foto_perfil_url
+        ? generarUrlFirmada(conductor.foto_perfil_url)
+        : null
+    };
+
+    res.json(conductorConUrl);
+
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener conductor', details: error.message });
+    res.status(500).json({
+      error: 'Error al obtener conductor',
+      details: error.message
+    });
   }
 };
-
 // Crear conductor
 exports.createConductor = [
   upload.any(),
   async (req, res) => {
     try {
+
       const { nombre, apellido, email, password, telefono, curp } = req.body;
 
-      // Validar email único
       const existing = await prisma.conductores.findUnique({ where: { email } });
-      if (existing) return res.status(400).json({ error: 'El correo ya está registrado' });
+      if (existing)
+        return res.status(400).json({ error: 'El correo ya está registrado' });
 
-      // Hashear password
       const hashed = await bcrypt.hash(password, 10);
 
-      // Subir foto si viene
       let fotoUrl = null;
+
       if (req.files && req.files.length > 0) {
-        fotoUrl = await subirAS3(req.files[0], email, 'conductores');
+        fotoUrl = await subirAS3(req.files[0], email);
       }
 
       const nuevo = await prisma.conductores.create({
-        data: { 
-          nombre, 
-          apellido, 
-          email, 
+        data: {
+          nombre,
+          apellido,
+          email,
+          telefono,
+          curp,
           password_hash: hashed,
-          telefono, 
-          curp, 
-          rol : "conductor", 
+          rol: "conductor",
           foto_perfil_url: fotoUrl
         }
       });
 
       res.status(201).json(nuevo);
+
     } catch (error) {
+
       console.error("Error en createConductor:", error);
-      res.status(500).json({ error: 'Error al crear conductor', details: error.message });
+
+      res.status(500).json({
+        error: 'Error al crear conductor',
+        details: error.message
+      });
+
     }
   }
 ];
@@ -112,6 +168,7 @@ exports.updateConductor = [
   upload.any(),
   async (req, res) => {
     try {
+
       const { nombre, apellido, email, password, telefono, curp } = req.body;
 
       const dataToUpdate = {};
@@ -122,15 +179,12 @@ exports.updateConductor = [
       if (telefono) dataToUpdate.telefono = telefono;
       if (curp) dataToUpdate.curp = curp;
 
-      // Si viene nueva contraseña
       if (password) {
-        const hashed = await bcrypt.hash(password, 10);
-        dataToUpdate.password_hash = hashed;
+        dataToUpdate.password_hash = await bcrypt.hash(password, 10);
       }
 
-      // Si viene archivo, subir a S3
       if (req.files && req.files.length > 0) {
-        const fotoUrl = await subirAS3(req.files[0], req.params.id, 'conductores');
+        const fotoUrl = await subirAS3(req.files[0], email);
         dataToUpdate.foto_perfil_url = fotoUrl;
       }
 
@@ -140,9 +194,16 @@ exports.updateConductor = [
       });
 
       res.json(conductor);
+
     } catch (error) {
+
       console.error("Error en updateConductor:", error);
-      res.status(500).json({ error: 'Error al actualizar conductor', details: error.message });
+
+      res.status(500).json({
+        error: 'Error al actualizar conductor',
+        details: error.message
+      });
+
     }
   }
 ];
@@ -168,22 +229,35 @@ exports.deleteConductor = async (req, res) => {
 exports.uploadFotoPerfilConductor = [
   upload.any(),
   async (req, res) => {
+
     try {
+
       if (!req.files || req.files.length === 0)
         return res.status(400).json({ error: 'No se envió ninguna imagen' });
 
       const file = req.files[0];
+
       const fotoUrl = await subirAS3(file, req.params.id);
 
       const conductor = await prisma.conductores.update({
         where: { id: Number(req.params.id) },
-        data: { foto_perfil_url: fotoUrl },
+        data: { foto_perfil_url: fotoUrl }
       });
 
-      res.json({ message: 'Foto actualizada', foto_perfil_url: conductor.foto_perfil_url });
+      res.json({
+        message: 'Foto actualizada',
+        foto_perfil_url: generarUrlFirmada(conductor.foto_perfil_url)
+      });
+
     } catch (err) {
+
       console.error('Error en uploadFotoPerfilConductor:', err);
-      res.status(500).json({ error: 'Error subiendo foto', details: err.message });
+
+      res.status(500).json({
+        error: 'Error subiendo foto',
+        details: err.message
+      });
+
     }
-  },
+  }
 ];

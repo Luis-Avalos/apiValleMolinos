@@ -4,6 +4,49 @@ const { Pool } = require('pg');
 
 const { DateTime } = require("luxon");
 
+
+const AWS = require("aws-sdk");
+
+const s3 = new AWS.S3({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  endpoint: new AWS.Endpoint(process.env.AWS_URL),
+  s3ForcePathStyle: true,
+  signatureVersion: "v4",
+  region: "us-east-1"
+});
+
+
+function generarUrlFirmada(key) {
+
+  if (!key) return null;
+
+  try {
+
+    if (key.startsWith("http")) {
+      const url = new URL(key);
+      key = url.pathname
+        .replace(`/${process.env.AWS_BUCKET}/`, "")
+        .replace(/^\/+/, "");
+    }
+
+    const params = {
+      Bucket: process.env.AWS_BUCKET,
+      Key: key,
+      Expires: 60 * 60 * 4
+    };
+
+    return s3.getSignedUrl("getObject", params);
+
+  } catch (error) {
+
+    console.error("Error generando URL:", error);
+    return null;
+
+  }
+}
+
+
 function toMexico(date) {
   if (!date) return null;
   return DateTime.fromJSDate(date, { zone: "utc" })
@@ -25,16 +68,39 @@ const pool = new Pool({
    =============================== */
 exports.getViajes = async (req, res) => {
   try {
+
     const viajes = await prisma.viajes.findMany({
       include: {
-        unidades: { include: { conductores: true } },
+        unidades: {
+          include: {
+            conductores: true
+          }
+        },
         rutas: true,
-        bitacora_cupos: true,
-      },
+        bitacora_cupos: true
+      }
     });
-    res.json(viajes);
+
+    const viajesConFotos = viajes.map(v => {
+
+      if (v.unidades?.conductores?.foto_perfil_url) {
+        v.unidades.conductores.foto_perfil_url =
+          generarUrlFirmada(v.unidades.conductores.foto_perfil_url);
+      }
+
+      return v;
+
+    });
+
+    res.json(viajesConFotos);
+
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener viajes', details: error.message });
+
+    res.status(500).json({
+      error: "Error al obtener viajes",
+      details: error.message
+    });
+
   }
 };
 
@@ -62,6 +128,11 @@ exports.getViajeById = async (req, res) => {
       ...viaje,
       fechainicioviaje: toMexico(viaje.fechainicioviaje),
     };
+
+    if (viaje.unidades?.conductores?.foto_perfil_url) {
+        viaje.unidades.conductores.foto_perfil_url =
+          generarUrlFirmada(viaje.unidades.conductores.foto_perfil_url);
+      }
 
     res.json(viaje);
   } catch (error) {

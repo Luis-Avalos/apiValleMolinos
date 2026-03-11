@@ -1,81 +1,155 @@
 const prisma = require('../models/userModel');
-
 const multer = require('multer');
 const AWS = require('aws-sdk');
 
-// Configuración de Multer 
+// Multer
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// Configuración de AWS S3 
+// AWS S3
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   endpoint: new AWS.Endpoint(process.env.AWS_URL),
   s3ForcePathStyle: true,
+  signatureVersion: "v4",
+  region: "us-east-1"
 });
 
-// funcin para S3
-async function subirAS3(file, unidadId, folder = 'unidades') {
-  const fileName = `vmprofile/${folder}/${unidadId}/${file.originalname}`;
+// SUBIR ARCHIVO A S3
+async function subirAS3(file, unidadId, folder = "unidades") {
+
+  const nombreLimpio = file.originalname
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "_");
+
+  const key = `vmprofile/${folder}/${unidadId}/${Date.now()}-${nombreLimpio}`;
 
   const params = {
     Bucket: process.env.AWS_BUCKET,
-    Key: fileName,
+    Key: key,
     Body: file.buffer,
-    ContentType: file.mimetype,
-    ACL: 'public-read',
+    ContentType: file.mimetype
   };
 
-  const uploadResult = await s3.upload(params).promise();
-  return uploadResult.Location; 
+  await s3.upload(params).promise();
+
+  return key; 
 }
 
-// Obtener todas las unidades
-exports.getAllUnidades = async (req, res) => {
+// GENERAR URL FIRMADA
+function generarUrlFirmada(key) {
+
+  if (!key) return null;
+
   try {
-    const unidades = await prisma.unidades.findMany({
-      include: { conductores: true } 
-    });
-    res.json(unidades);
+
+    // Limpiezade primeras URLs S3 
+    if (key.startsWith("http")) {
+      const url = new URL(key);
+
+      key = url.pathname
+        .replace(`/${process.env.AWS_BUCKET}/`, "")
+        .replace(/^\/+/, "");
+    }
+
+    const params = {
+      Bucket: process.env.AWS_BUCKET,
+      Key: key,
+      Expires: 60 * 60 * 4
+    };
+
+    return s3.getSignedUrl("getObject", params);
+
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener unidades', details: error.message });
+
+    console.error("Error generando URL firmada:", error);
+    return null;
+
   }
+
+}
+
+// OBTENER TODAS LAS UNIDADES
+exports.getAllUnidades = async (req, res) => {
+
+  try {
+
+    const unidades = await prisma.unidades.findMany({
+      include: { conductores: true }
+    });
+
+    const unidadesConUrl = unidades.map(u => ({
+      ...u,
+      foto_url: generarUrlFirmada(u.foto_url)
+    }));
+
+    res.json(unidadesConUrl);
+
+  } catch (error) {
+
+    res.status(500).json({
+      error: 'Error al obtener unidades',
+      details: error.message
+    });
+
+  }
+
 };
 
-// Obtener unidad por ID
+// OBTENER UNIDAD POR ID
 exports.getUnidadById = async (req, res) => {
+
   try {
+
     const unidad = await prisma.unidades.findUnique({
       where: { id: Number(req.params.id) },
       include: { conductores: true }
     });
-    if (!unidad) return res.status(404).json({ error: 'Unidad no encontrada' });
-    res.json(unidad);
+
+    if (!unidad)
+      return res.status(404).json({ error: 'Unidad no encontrada' });
+
+    const unidadConUrl = {
+      ...unidad,
+      foto_url: generarUrlFirmada(unidad.foto_url)
+    };
+
+    res.json(unidadConUrl);
+
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener unidad', details: error.message });
+
+    res.status(500).json({
+      error: 'Error al obtener unidad',
+      details: error.message
+    });
+
   }
+
 };
 
-// Crear unidad
+// CREAR UNIDAD
 exports.createUnidad = [
   upload.any(),
   async (req, res) => {
+
     try {
+
       const { numero_economico, placas, capacidad, estado, conductor_id, id_geotab } = req.body;
 
       let fotoUrl = null;
 
       if (req.files && req.files.length > 0) {
-        fotoUrl = await subirAS3(req.files[0], numero_economico, 'unidades');
+        fotoUrl = await subirAS3(req.files[0], numero_economico, "unidades");
       }
 
       const nuevo = await prisma.unidades.create({
-        data: { 
-          numero_economico, 
-          placas, 
-          capacidad: capacidad ? Number(capacidad) : null, 
-          estado, 
+        data: {
+          numero_economico,
+          placas,
+          capacidad: capacidad ? Number(capacidad) : null,
+          estado,
           conductor_id: conductor_id ? Number(conductor_id) : null,
           id_geotab,
           foto_url: fotoUrl
@@ -83,21 +157,32 @@ exports.createUnidad = [
       });
 
       res.status(201).json(nuevo);
+
     } catch (error) {
+
       console.error("Error en createUnidad:", error);
-      res.status(500).json({ error: 'Error al crear unidad', details: error.message });
+
+      res.status(500).json({
+        error: 'Error al crear unidad',
+        details: error.message
+      });
+
     }
+
   }
 ];
 
-// Actualizar unidad
+// ACTUALIZAR UNIDAD
 exports.updateUnidad = [
   upload.any(),
   async (req, res) => {
+
     try {
+
       const { numero_economico, placas, capacidad, estado, conductor_id, id_geotab } = req.body;
 
       const dataToUpdate = {};
+
       if (numero_economico) dataToUpdate.numero_economico = numero_economico;
       if (placas) dataToUpdate.placas = placas;
       if (capacidad) dataToUpdate.capacidad = Number(capacidad);
@@ -106,9 +191,11 @@ exports.updateUnidad = [
       if (id_geotab) dataToUpdate.id_geotab = id_geotab;
 
       if (req.files && req.files.length > 0) {
-        //foto
-        const fotoUrl = await subirAS3(req.files[0], req.params.id, 'unidades');
+
+        const fotoUrl = await subirAS3(req.files[0], req.params.id, "unidades");
+
         dataToUpdate.foto_url = fotoUrl;
+
       }
 
       const unidad = await prisma.unidades.update({
@@ -117,22 +204,41 @@ exports.updateUnidad = [
       });
 
       res.json(unidad);
+
     } catch (error) {
+
       console.error("Error en updateUnidad:", error);
-      res.status(500).json({ error: 'Error al actualizar unidad', details: error.message });
+
+      res.status(500).json({
+        error: 'Error al actualizar unidad',
+        details: error.message
+      });
+
     }
+
   }
 ];
 
-
-// Eliminar unidad
+// ELIMINAR UNIDAD
 exports.deleteUnidad = async (req, res) => {
+
   try {
+
     await prisma.unidades.delete({
       where: { id: Number(req.params.id) }
     });
-    res.json({ message: 'Unidad eliminada correctamente' });
+
+    res.json({
+      message: 'Unidad eliminada correctamente'
+    });
+
   } catch (error) {
-    res.status(500).json({ error: 'Error al eliminar unidad', details: error.message });
+
+    res.status(500).json({
+      error: 'Error al eliminar unidad',
+      details: error.message
+    });
+
   }
+
 };
