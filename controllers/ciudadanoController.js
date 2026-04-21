@@ -103,6 +103,29 @@ res.json(ciudadanoConUrl);
 };
 
 
+function isValidPassword(password, user) {
+  const { nombre, apellido, curp } = user;
+  const pass = password.toLowerCase();
+
+  if (password.length < 8) return false;
+  if (!/[A-Z]/.test(password)) return false;
+  if (!/[a-z]/.test(password)) return false;
+  if (!/[0-9]/.test(password)) return false;
+
+  if (nombre && pass.includes(nombre.toLowerCase())) return false;
+  if (apellido && pass.includes(apellido.toLowerCase())) return false;
+
+  if (curp) {
+    const fecha = curp.slice(4, 10);
+    if (pass.includes(fecha)) return false;
+  }
+
+  const secuencias = ["1234", "2345", "3456", "4567", "5678", "6789"];
+  if (secuencias.some(seq => pass.includes(seq))) return false;
+
+  return true;
+}
+
 exports.createCiudadano = [
   upload.any(),
   async (req, res) => {
@@ -129,8 +152,12 @@ exports.createCiudadano = [
         console.error(" No se la contraseña en el body");
         return res.status(400).json({ error: "La contraseña es requerida" });
       }
-       const plainPassword = password;
-
+      
+if (!isValidPassword(password, { nombre, apellido, curp })) {
+  return res.status(400).json({
+    error: "La contraseña no cumple con los requisitos de seguridad"
+  });
+}
 
       const hashed = await bcrypt.hash(password, 10);
 
@@ -181,8 +208,7 @@ exports.createCiudadano = [
             domicilio,
             edad,
             fotoUrl,
-            cartaUrl,
-            plainPassword
+            cartaUrl
           );
 
         console.log(` Correo enviado a ${email}`);
@@ -235,7 +261,15 @@ exports.updateCiudadano = [
       if (telefono_emergencia) dataToUpdate.telefono_emergencia = telefono_emergencia;
       if (domicilio) dataToUpdate.domicilio = domicilio;
       if (edad) dataToUpdate.edad = parseInt(edad);
-      if (password) dataToUpdate.password_hash = await bcrypt.hash(password, 10);
+      if (password) {
+      if (!isValidPassword(password, ciudadano)) {
+        return res.status(400).json({
+          error: "La contraseña no cumple con los requisitos"
+        });
+      }
+
+  dataToUpdate.password_hash = await bcrypt.hash(password, 10);
+}
 
       // Archivos (foto y carta)
       if (req.files && req.files.length > 0) {

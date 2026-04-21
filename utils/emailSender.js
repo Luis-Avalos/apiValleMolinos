@@ -783,7 +783,7 @@ a[x-apple-data-detectors],
   <h6 style="Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;
   letter-spacing:0;font-size:16px;font-style:normal;font-weight:normal;
   line-height:19.2px;color:#3d85c6">
-    <u><a href="https://camioncito.zapopan.gob.mx/landing/login.html" target="_blank"
+    <u><a href="https://camioncito.zapopan.gob.mx/login.html" target="_blank"
     style="text-decoration:underline;color:#3d85c6;font-size:16px">
     Enlace para iniciar sesión
     </a></u>
@@ -820,13 +820,7 @@ a[x-apple-data-detectors],
   </p>
 
 
-  <!-- Mostrar foto solo si existe -->
-  ${fotoUrl ? `
-  <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
-  line-height:28px;color:#333333;font-size:14px;text-align:center;margin-top:15px;">
-    <strong>Fotografía:</strong><br>
-    <img src="${fotoUrl}" alt="Fotografía" style="max-width:150px;border-radius:8px;margin-top:10px;">
-  </p>` : ''}
+
 
   <!-- Mostrar carta PDF solo si existe -->
   ${cartaUrl ? `
@@ -838,10 +832,7 @@ a[x-apple-data-detectors],
     </a>
   </p>` : ''}
 
-  <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
-  line-height:21px;color:#333333;font-size:14px;text-align:center;margin-top:15px;">
-    <strong>Contraseña del sitio:</strong> ${plainPassword}
-  </p>
+ 
 
   <p style="font-family:arial, 'helvetica neue', helvetica, sans-serif;
   line-height:21px;color:#333333;font-size:14px;margin-top:10px;">
