@@ -149,6 +149,7 @@ exports.createViaje = async (req, res) => {
       fecha,
       hora_inicio,
       hora_fin,
+      turno,
       unidad_id,
       conductor_id,
       total_vueltas_programadas,
@@ -179,6 +180,7 @@ exports.createViaje = async (req, res) => {
         fecha: new Date(fecha),
         hora_inicio: new Date(hora_inicio),
         hora_fin: new Date(hora_fin),
+        turno: turno,
         unidad_id: unidad_id ? parseInt(unidad_id) : null,
         estado: estado || "pendiente",
         total_vueltas_programadas: total_vueltas_programadas
@@ -313,6 +315,7 @@ exports.updateViaje = async (req, res) => {
       fecha,
       hora_inicio,
       hora_fin,
+      turno,
       unidad_id,
       conductor_id,
       ruta_id,
@@ -335,6 +338,7 @@ exports.updateViaje = async (req, res) => {
     if (fecha) dataToUpdate.fecha = new Date(fecha);
     if (hora_inicio) dataToUpdate.hora_inicio = new Date(hora_inicio);
     if (hora_fin) dataToUpdate.hora_fin = new Date(hora_fin);
+    if (turno) dataToUpdate.turno = turno;
     if (estado) dataToUpdate.estado = estado;
 
     const nuevosPasajeros =
