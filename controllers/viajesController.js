@@ -162,7 +162,6 @@ exports.createViaje = async (req, res) => {
 
     let conductorAsignadoId = conductor_id ? parseInt(conductor_id) : null;
 
-    // Si no se envía conductor_id, buscar el que tenga la unidad
     if (!conductorAsignadoId && unidad_id) {
       const unidad = await prisma.unidades.findUnique({
         where: { id: parseInt(unidad_id) },
@@ -171,6 +170,21 @@ exports.createViaje = async (req, res) => {
       if (unidad?.conductor_id) {
         conductorAsignadoId = unidad.conductor_id;
       }
+    }
+
+
+    const conflicto = await prisma.viajes.findFirst({
+      where: {
+        unidad_id: unidad_id ? parseInt(unidad_id) : null,
+        fecha: new Date(fecha),
+        turno: turno
+      }
+    });
+
+    if (conflicto) {
+      return res.status(400).json({
+        error: "Esta unidad ya tiene un viaje asignado en este turno y fecha"
+      });
     }
 
     // Crear el viaje
