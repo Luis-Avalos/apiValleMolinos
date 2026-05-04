@@ -78,7 +78,8 @@ exports.getViajes = async (req, res) => {
         },
         rutas: true,
         bitacora_cupos: true
-      }
+      },
+      orderBy: { id: "desc" },
     });
 
     const viajesConFotos = viajes.map(v => {
