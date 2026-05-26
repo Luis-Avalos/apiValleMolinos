@@ -4,6 +4,7 @@ const viajesController = require('../controllers/viajesController');
 
 router.get('/', viajesController.getViajes);
 router.get('/bitacora', viajesController.getSubidas);
+router.get("/hastafecha", viajesController.getViajesHastaFecha);
 
 router.put('/:id/iniciar', viajesController.iniciarViaje);
 router.put('/:id/finalizar', viajesController.finalizarViaje);

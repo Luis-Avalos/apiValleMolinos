@@ -229,7 +229,6 @@ if (!isValidPassword(password, { nombre, apellido, curp })) {
   }
 ];
 
-
 // --- Actualizar ciudadano
 exports.updateCiudadano = [
   upload.any(),

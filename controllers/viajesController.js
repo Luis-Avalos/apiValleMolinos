@@ -445,3 +445,63 @@ exports.getSubidas = async (req, res) => {
     res.status(500).json({ error: 'Error al obtener bitácora', details: error.message });
   }
 };
+
+
+/* ===============================
+   OBTENER VIAJES HASTA UNA FECHA
+   =============================== */
+exports.getViajesHastaFecha = async (req, res) => {
+  try {
+
+    const { fecha } = req.query;
+
+    if (!fecha) {
+      return res.status(400).json({
+        error: "Debe enviar una fecha. Ejemplo: ?fecha=2026-05-25"
+      });
+    }
+
+    const query = `
+      SELECT
+        b.id,
+        c.numero_economico,
+        d.nombre,
+        b.fecha,
+        b.hora_inicio,
+        b.hora_fin,
+        b.total_vueltas_programadas,
+        b.vueltas_completadas,
+        b.pasajeros_actuales,
+        b.creado_en,
+        b.fechainicioviaje,
+        b.vueltascompletadasmanual
+      FROM vallemolinostest.viajes AS b
+      LEFT JOIN vallemolinostest.unidades AS c
+        ON b.unidad_id = c.id
+      LEFT JOIN vallemolinostest.rutas AS d
+        ON b.ruta_id = d.id
+      WHERE b.fecha <= $1
+      ORDER BY b.fecha DESC
+    `;
+
+    const result = await pool.query(query, [fecha]);
+
+    const viajes = result.rows.map(viaje => ({
+      ...viaje,
+      fechainicioviaje: toMexico(viaje.fechainicioviaje),
+      creado_en: toMexico(viaje.creado_en)
+    }));
+
+    res.json(viajes);
+
+  } catch (error) {
+
+    console.error("Error obteniendo viajes:", error);
+
+    res.status(500).json({
+      error: "Error al obtener viajes",
+      details: error.message
+    });
+
+  }
+};
