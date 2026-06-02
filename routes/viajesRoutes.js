@@ -15,6 +15,4 @@ router.post('/', viajesController.createViaje);
 router.put('/:id', viajesController.updateViaje);
 router.get('/:id', viajesController.getViajeById);
 
-
-
 module.exports = router;

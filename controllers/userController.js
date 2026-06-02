@@ -261,3 +261,51 @@ exports.uploadFotoPerfilConductor = [
     }
   }
 ];
+
+//Dar de alta administrador
+exports.createAdmin = [
+  upload.any(),
+  async (req, res) => {
+    try {
+
+      const { nombre, apellido, email, password, telefono, curp } = req.body;
+
+      const existing = await prisma.conductores.findUnique({ where: { email } });
+      if (existing)
+        return res.status(400).json({ error: 'El correo ya está registrado' });
+
+      const hashed = await bcrypt.hash(password, 10);
+
+      let fotoUrl = null;
+
+      if (req.files && req.files.length > 0) {
+        fotoUrl = await subirAS3(req.files[0], email);
+      }
+
+      const nuevo = await prisma.conductores.create({
+        data: {
+          nombre,
+          apellido,
+          email,
+          telefono,
+          curp,
+          password_hash: hashed,
+          rol: "admin",
+          foto_perfil_url: fotoUrl
+        }
+      });
+
+      res.status(201).json(nuevo);
+
+    } catch (error) {
+
+      console.error("Error en createConductor:", error);
+
+      res.status(500).json({
+        error: 'Error al crear conductor',
+        details: error.message
+      });
+
+    }
+  }
+];

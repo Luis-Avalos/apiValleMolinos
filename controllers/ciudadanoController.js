@@ -51,7 +51,6 @@ function generarUrlFirmada(key) {
   return s3.getSignedUrl("getObject", params);
 }
 
-
 // --- Obtener todos los ciudadanos
 exports.getAllCiudadanos = async (req, res) => {
   try {
@@ -101,7 +100,6 @@ res.json(ciudadanoConUrl);
     res.status(500).json({ error: 'Error al obtener ciudadano', details: error.message });
   }
 };
-
 
 function isValidPassword(password, user) {
   const { nombre, apellido, curp } = user;
@@ -330,4 +328,4 @@ exports.deleteCiudadano = async (req, res) => {
     console.error('Error en deleteCiudadano:', error);
     res.status(500).json({ error: 'Error al eliminar ciudadano', details: error.message });
   }
-};
+};  

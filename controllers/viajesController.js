@@ -4,7 +4,6 @@ const { Pool } = require('pg');
 
 const { DateTime } = require("luxon");
 
-
 const AWS = require("aws-sdk");
 
 const s3 = new AWS.S3({
@@ -15,7 +14,6 @@ const s3 = new AWS.S3({
   signatureVersion: "v4",
   region: "us-east-1"
 });
-
 
 function generarUrlFirmada(key) {
 
@@ -45,7 +43,6 @@ function generarUrlFirmada(key) {
 
   }
 }
-
 
 function toMexico(date) {
   if (!date) return null;
@@ -314,7 +311,6 @@ exports.getViajesConductor = async (req, res) => {
     res.status(500).json({ error: 'Error al obtener viajes', details: error.message });
   }
 };
-
 
 /* ===============================
     ACTUALIZAR VIAJE
