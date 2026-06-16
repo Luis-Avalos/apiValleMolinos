@@ -63,54 +63,156 @@ function limpiarNombreArchivo(nombre) {
 
 // Obtener todos los conductores activos
 exports.getAllConductores = async (req, res) => {
+
   try {
 
     const conductores = await prisma.conductores.findMany({
-      where: { estatus: true },
-      include: { unidades: true }
+
+      where: {
+        estatus: true
+      },
+
+      include: {
+
+        viajes: {
+
+          include: {
+
+            unidades: true
+
+          }
+
+        }
+
+      }
+
     });
 
     const conductoresConUrl = conductores.map(c => ({
+
       ...c,
+
       foto_perfil_url: c.foto_perfil_url
         ? generarUrlFirmada(c.foto_perfil_url)
-        : null
+        : null,
+
+      unidades: [
+        ...new Map(
+
+          c.viajes
+            .filter(v => v.unidades)
+            .map(v => [v.unidades.id, {
+
+              ...v.unidades,
+
+              foto_url: v.unidades.foto_url
+                ? generarUrlFirmada(v.unidades.foto_url)
+                : null
+
+            }])
+
+        ).values()
+      ]
+
     }));
 
     res.json(conductoresConUrl);
 
-  } catch (error) {
-    res.status(500).json({ details: error.message });
-  }
+  } catch(error){
+
+console.error(error);
+
+res.status(500).json({
+
+error:"Error al obtener conductores",
+
+details:error.message,
+
+stack:error.stack
+
+});
+
+}
+
 };
 
 // Obtener conductor por ID
 exports.getConductorById = async (req, res) => {
+
   try {
 
     const conductor = await prisma.conductores.findUnique({
-      where: { id: Number(req.params.id) },
-      include: { unidades: true }
+
+      where: {
+        id: Number(req.params.id)
+      },
+
+      include: {
+
+        viajes: {
+
+          include: {
+
+            unidades: true
+
+          }
+
+        }
+
+      }
+
     });
 
-    if (!conductor)
-      return res.status(404).json({ error: 'Conductor no encontrado' });
+    if (!conductor) {
+
+      return res.status(404).json({
+        error: "Conductor no encontrado"
+      });
+
+    }
 
     const conductorConUrl = {
+
       ...conductor,
+
       foto_perfil_url: conductor.foto_perfil_url
         ? generarUrlFirmada(conductor.foto_perfil_url)
-        : null
+        : null,
+
+      unidades: [
+        ...new Map(
+
+          conductor.viajes
+            .filter(v => v.unidades)
+            .map(v => [v.unidades.id, {
+
+              ...v.unidades,
+
+              foto_url: v.unidades.foto_url
+                ? generarUrlFirmada(v.unidades.foto_url)
+                : null
+
+            }])
+
+        ).values()
+      ]
+
     };
 
     res.json(conductorConUrl);
 
   } catch (error) {
+
     res.status(500).json({
-      error: 'Error al obtener conductor',
+
+      error: "Error al obtener conductor",
+
       details: error.message
+
     });
+
   }
+
 };
 // Crear conductor
 exports.createConductor = [
