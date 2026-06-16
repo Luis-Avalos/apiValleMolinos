@@ -68,11 +68,8 @@ exports.getViajes = async (req, res) => {
 
     const viajes = await prisma.viajes.findMany({
       include: {
-        unidades: {
-          include: {
-            conductores: true
-          }
-        },
+        unidades: true,
+        conductores: true,
         rutas: true,
         bitacora_cupos: true
       },
@@ -81,13 +78,13 @@ exports.getViajes = async (req, res) => {
 
     const viajesConFotos = viajes.map(v => {
 
-      if (v.unidades?.conductores?.foto_perfil_url) {
-        v.unidades.conductores.foto_perfil_url =
-          generarUrlFirmada(v.unidades.conductores.foto_perfil_url);
+      if (v.conductores?.foto_perfil_url) {
+          v.conductores.foto_perfil_url =
+            generarUrlFirmada(
+              v.conductores.foto_perfil_url
+            );
       }
-
       return v;
-
     });
 
     res.json(viajesConFotos);
@@ -113,9 +110,10 @@ exports.getViajeById = async (req, res) => {
     let viaje = await prisma.viajes.findUnique({
       where: { id },
       include: {
-        unidades: { include: { conductores: true } },
-        rutas: true,
-        bitacora_cupos: true,
+        unidades:true,
+        conductores:true,
+        rutas:true,
+        bitacora_cupos:true
       },
     });
 
@@ -127,9 +125,11 @@ exports.getViajeById = async (req, res) => {
       fechainicioviaje: toMexico(viaje.fechainicioviaje),
     };
 
-    if (viaje.unidades?.conductores?.foto_perfil_url) {
-        viaje.unidades.conductores.foto_perfil_url =
-          generarUrlFirmada(viaje.unidades.conductores.foto_perfil_url);
+    if (viaje.conductores?.foto_perfil_url) {
+        viaje.conductores.foto_perfil_url =
+          generarUrlFirmada(
+            viaje.conductores.foto_perfil_url
+          );
       }
 
     res.json(viaje);
@@ -158,19 +158,6 @@ exports.createViaje = async (req, res) => {
       return res.status(400).json({ error: "Faltan datos necesarios" });
     }
 
-    let conductorAsignadoId = conductor_id ? parseInt(conductor_id) : null;
-
-    if (!conductorAsignadoId && unidad_id) {
-      const unidad = await prisma.unidades.findUnique({
-        where: { id: parseInt(unidad_id) },
-        select: { conductor_id: true },
-      });
-      if (unidad?.conductor_id) {
-        conductorAsignadoId = unidad.conductor_id;
-      }
-    }
-
-
     const conflicto = await prisma.viajes.findFirst({
       where: {
         unidad_id: unidad_id ? parseInt(unidad_id) : null,
@@ -192,26 +179,20 @@ exports.createViaje = async (req, res) => {
         fecha: new Date(fecha),
         hora_inicio: new Date(hora_inicio),
         hora_fin: new Date(hora_fin),
-        turno: turno,
+        turno,
         unidad_id: unidad_id ? parseInt(unidad_id) : null,
+        conductor_id: conductor_id ? parseInt(conductor_id) : null,
         estado: estado || "pendiente",
         total_vueltas_programadas: total_vueltas_programadas
           ? parseInt(total_vueltas_programadas)
           : 1,
       },
       include: {
-        unidades: { include: { conductores: true } },
-        rutas: true,
+        unidades:true,
+        conductores:true,
+        rutas:true
       },
     });
-
-    //  Si hay conductor asignado y unidad, actualizar relación (solo si difiere)
-    if (conductorAsignadoId && unidad_id) {
-      await prisma.unidades.update({
-        where: { id: parseInt(unidad_id) },
-        data: { conductor_id: conductorAsignadoId },
-      });
-    }
 
     res.status(201).json(viaje);
   } catch (error) {
@@ -234,16 +215,22 @@ exports.asignarViaje = async (req, res) => {
       return res.status(400).json({ error: 'Datos inválidos' });
     }
 
-    await prisma.unidades.update({
-      where: { id: unidadId },
-      data: { conductor_id: conductorId },
-    });
+   const viaje = await prisma.viajes.update({
+     where: { 
+        id, 
+      },
 
-    const viaje = await prisma.viajes.update({
-      where: { id },
-      data: { unidad_id: unidadId },
-      include: { unidades: { include: { conductores: true } }, rutas: true },
-    });
+     data: {
+       unidad_id: unidadId,
+       conductor_id: conductorId,
+     },
+
+     include: {
+       unidades: true,
+       conductores: true,
+       rutas: true,
+     },
+   });
 
     res.json(viaje);
   } catch (error) {
@@ -265,7 +252,7 @@ exports.iniciarViaje = async (req, res) => {
         estado: 'en_curso',
         fechainicioviaje: fechaInicio
       },
-      include: { unidades: { include: { conductores: true } }, rutas: true },
+     include:{ unidades:true, conductores:true, rutas:true }
     });
     res.json(viaje);
   } catch (error) {
@@ -284,7 +271,7 @@ exports.finalizarViaje = async (req, res) => {
     const viaje = await prisma.viajes.update({
       where: { id },
       data: { estado: 'finalizado' },
-      include: { unidades: { include: { conductores: true } }, rutas: true },
+     include:{ unidades:true, conductores:true, rutas:true }
     });
 
     res.json(viaje);
@@ -302,8 +289,8 @@ exports.getViajesConductor = async (req, res) => {
     if (isNaN(conductorId)) return res.status(400).json({ error: 'ID conductor inválido' });
 
     const viajes = await prisma.viajes.findMany({
-      where: { unidades: { conductor_id: conductorId } },
-      include: { unidades: { include: { conductores: true } }, rutas: true },
+      where: { conductor_id: conductorId },
+      include:{ unidades:true, conductores:true, rutas:true }
     });
 
     res.json(viajes);
@@ -361,26 +348,15 @@ exports.updateViaje = async (req, res) => {
       dataToUpdate.pasajeros_actuales = nuevosPasajeros;
     }
 
-    if (unidad_id) dataToUpdate.unidad_id = parseInt(unidad_id);
+    if (unidad_id !== undefined && unidad_id !== null) { dataToUpdate.unidad_id = parseInt(unidad_id); }
     if (ruta_id) dataToUpdate.ruta_id = parseInt(ruta_id);
-
-    // Actualiza conductor si se envía
-    if (conductor_id && unidad_id) {
-      await prisma.unidades.update({
-        where: { id: parseInt(unidad_id) },
-        data: { conductor_id: parseInt(conductor_id) },
-      });
-    }
-
+    if (conductor_id !== undefined && conductor_id !== null) { dataToUpdate.conductor_id = parseInt(conductor_id); }
+    
     //  Actualiza viaje con Prisma
     const viaje = await prisma.viajes.update({
       where: { id },
       data: dataToUpdate,
-      include: {
-        unidades: { include: { conductores: true } },
-        rutas: true,
-        bitacora_cupos: true,
-      },
+      include:{ unidades:true, conductores:true, rutas:true, bitacora_cupos:true },
     });
 
     //  Registra en bitácora con SQL nativo (evita ST_MakePoint de Prisma)
@@ -441,7 +417,6 @@ exports.getSubidas = async (req, res) => {
     res.status(500).json({ error: 'Error al obtener bitácora', details: error.message });
   }
 };
-
 
 /* ===============================
    OBTENER VIAJES HASTA UNA FECHA

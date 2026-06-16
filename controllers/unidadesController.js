@@ -76,9 +76,7 @@ exports.getAllUnidades = async (req, res) => {
 
   try {
 
-    const unidades = await prisma.unidades.findMany({
-      include: { conductores: true }
-    });
+    const unidades = await prisma.unidades.findMany();
 
     const unidadesConUrl = unidades.map(u => ({
       ...u,
@@ -88,6 +86,8 @@ exports.getAllUnidades = async (req, res) => {
     res.json(unidadesConUrl);
 
   } catch (error) {
+
+    console.error(error);
 
     res.status(500).json({
       error: 'Error al obtener unidades',
@@ -103,10 +103,11 @@ exports.getUnidadById = async (req, res) => {
 
   try {
 
-    const unidad = await prisma.unidades.findUnique({
-      where: { id: Number(req.params.id) },
-      include: { conductores: true }
-    });
+  const unidad = await prisma.unidades.findUnique({
+  where: {
+    id: Number(req.params.id)
+  }
+});
 
     if (!unidad)
       return res.status(404).json({ error: 'Unidad no encontrada' });
@@ -136,7 +137,7 @@ exports.createUnidad = [
 
     try {
 
-      const { numero_economico, placas, capacidad, estado, conductor_id, id_geotab } = req.body;
+      const { numero_economico, placas, capacidad, estado, id_geotab } = req.body;
 
       let fotoUrl = null;
 
@@ -150,7 +151,6 @@ exports.createUnidad = [
           placas,
           capacidad: capacidad ? Number(capacidad) : null,
           estado,
-          conductor_id: conductor_id ? Number(conductor_id) : null,
           id_geotab,
           foto_url: fotoUrl
         }
@@ -179,7 +179,7 @@ exports.updateUnidad = [
 
     try {
 
-      const { numero_economico, placas, capacidad, estado, conductor_id, id_geotab } = req.body;
+      const { numero_economico, placas, capacidad, estado, id_geotab } = req.body;
 
       const dataToUpdate = {};
 
@@ -187,7 +187,6 @@ exports.updateUnidad = [
       if (placas) dataToUpdate.placas = placas;
       if (capacidad) dataToUpdate.capacidad = Number(capacidad);
       if (estado) dataToUpdate.estado = estado;
-      if (conductor_id !== undefined) dataToUpdate.conductor_id = Number(conductor_id);
       if (id_geotab) dataToUpdate.id_geotab = id_geotab;
 
       if (req.files && req.files.length > 0) {

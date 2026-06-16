@@ -21,7 +21,6 @@ const s3 = new AWS.S3({
   region: "us-east-1"
 });
 
-
 // Subir archivo a S3
 async function subirAS3(file, email) {
 
@@ -39,7 +38,6 @@ async function subirAS3(file, email) {
 
   return key;
 }
-
 
 // Generar URL firmada
 function generarUrlFirmada(key) {
@@ -85,7 +83,6 @@ exports.getAllConductores = async (req, res) => {
     res.status(500).json({ details: error.message });
   }
 };
-
 
 // Obtener conductor por ID
 exports.getConductorById = async (req, res) => {
