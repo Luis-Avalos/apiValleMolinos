@@ -92,7 +92,7 @@ model viajes {
   hora_inicio               DateTime         @db.Time(6)
   hora_fin                  DateTime         @db.Time(6)
   total_vueltas_programadas Int?             @default(1)
-  vueltas_completadas       Int?             @default(0)
+  vueltas_completadas       Float?           @default(0) 
   pasajeros_actuales        Int?             @default(0)
   estado                    String?          @default("pendiente") @db.VarChar(20)
   creado_en                 DateTime?        @default(now()) @db.Timestamp(6)
