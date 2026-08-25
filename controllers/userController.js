@@ -9,7 +9,6 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // Configuración S3
-
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 const s3 = new AWS.S3({

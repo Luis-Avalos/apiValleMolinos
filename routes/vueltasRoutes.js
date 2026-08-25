@@ -3,14 +3,15 @@ const router = express.Router();
 const vueltasController = require('../controllers/vueltasController');
 const authMiddleware = require('../middlewares/authMiddleware');
 
-// CRUD de vueltas
-router.get('/', authMiddleware,vueltasController.getAllVueltas);
-router.get('/:id', authMiddleware,vueltasController.getVueltaById);
-router.get('/:id/vueltas',  authMiddleware,vueltasController.getVueltas);
-router.post('/', authMiddleware,vueltasController.createVuelta);
-router.put('/:id', authMiddleware,vueltasController.updateVuelta);
-router.put('/:id/vueltas',  authMiddleware,vueltasController.actualizarVueltas);
-router.delete('/:id', authMiddleware,vueltasController.deleteVuelta);
+// ✅ Rutas para vueltas de viajes (más específicas)
+router.get('/viaje/:id/vueltas', authMiddleware, vueltasController.getVueltas);
+router.put('/viaje/:id/vueltas', authMiddleware, vueltasController.actualizarVueltas);
+
+// ✅ CRUD de vueltas
+router.get('/', authMiddleware, vueltasController.getAllVueltas);
+router.get('/:id', authMiddleware, vueltasController.getVueltaById);
+router.post('/', authMiddleware, vueltasController.createVuelta);
+router.put('/:id', authMiddleware, vueltasController.updateVuelta);
+router.delete('/:id', authMiddleware, vueltasController.deleteVuelta);
 
 module.exports = router;
-  
