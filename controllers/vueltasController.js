@@ -94,16 +94,16 @@ exports.actualizarVueltas = async (req, res) => {
       return res.status(400).json({ error: 'Faltan datos: vueltas_completadas' });
     }
 
-    // ✅ Validar que sea un número válido
+    //  Validar que sea un número válido
     const vueltasConDecimal = parseFloat(vueltas_completadas);
     if (isNaN(vueltasConDecimal)) {
       return res.status(400).json({ error: 'vueltas_completadas debe ser un número válido' });
     }
 
-    // ✅ Redondear a 1 decimal para consistencia
+    //  Redondear a 1 decimal para consistencia
     const vueltasRedondeadas = Math.round(vueltasConDecimal * 10) / 10;
 
-    console.log(`🔄 Actualizando viaje ${id}: vueltas_completadas = ${vueltasRedondeadas}`);
+    console.log(` Actualizando viaje ${id}: vueltas_completadas = ${vueltasRedondeadas}`);
 
     // Verificar que el viaje existe
     const viajeExistente = await prisma.viajes.findUnique({
@@ -114,7 +114,7 @@ exports.actualizarVueltas = async (req, res) => {
       return res.status(404).json({ error: 'Viaje no encontrado' });
     }
 
-    // ✅ ACTUALIZAR SOLO vueltas_completadas
+    // ACTUALIZAR SOLO vueltas_completadas
     const viaje = await prisma.viajes.update({
       where: { id },
       data: {
@@ -127,7 +127,7 @@ exports.actualizarVueltas = async (req, res) => {
       }
     });
 
-    console.log(`✅ Viaje ${id} actualizado: ${vueltasRedondeadas.toFixed(1)} vueltas`);
+    console.log(`Viaje ${id} actualizado: ${vueltasRedondeadas.toFixed(1)} vueltas`);
 
     res.json({
       ...viaje,
@@ -135,7 +135,7 @@ exports.actualizarVueltas = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error al actualizar vueltas:', error);
+    console.error(' Error al actualizar vueltas:', error);
     res.status(500).json({ 
       error: 'Error al actualizar vueltas', 
       details: error.message 
@@ -149,7 +149,7 @@ exports.getVueltas = async (req, res) => {
     const id = Number(req.params.id);
     if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
 
-    console.log(`📊 Obteniendo vueltas del viaje ${id}`);
+    console.log(` Obteniendo vueltas del viaje ${id}`);
 
     const viaje = await prisma.viajes.findUnique({
       where: { id },
@@ -165,9 +165,9 @@ exports.getVueltas = async (req, res) => {
       return res.status(404).json({ error: 'Viaje no encontrado' });
     }
 
-    // ✅ Devolver el valor con decimal
+    //  Devolver el valor con decimal
     const vueltas = viaje.vueltas_completadas || 0;
-    console.log(`📊 Viaje ${id}: ${vueltas.toFixed(1)} vueltas`);
+    console.log(` Viaje ${id}: ${vueltas.toFixed(1)} vueltas`);
 
     res.json({
       id: viaje.id,
@@ -176,7 +176,7 @@ exports.getVueltas = async (req, res) => {
       estado: viaje.estado
     });
   } catch (error) {
-    console.error('❌ Error al obtener vueltas:', error);
+    console.error(' Error al obtener vueltas:', error);
     res.status(500).json({ 
       error: 'Error al obtener vueltas', 
       details: error.message 

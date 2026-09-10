@@ -92,7 +92,7 @@ model viajes {
   hora_inicio               DateTime         @db.Time(6)
   hora_fin                  DateTime         @db.Time(6)
   total_vueltas_programadas Int?             @default(1)
-  vueltas_completadas       Float?           @default(0) 
+  vueltas_completadas       Float?           @default(0)
   pasajeros_actuales        Int?             @default(0)
   estado                    String?          @default("pendiente") @db.VarChar(20)
   creado_en                 DateTime?        @default(now()) @db.Timestamp(6)
@@ -100,6 +100,7 @@ model viajes {
   vueltascompletadasmanual  Int?             @default(0)
   turno                     String?          @db.VarChar
   conductor_id              Int?
+  promedio                  Int?
   bitacora_cupos            bitacora_cupos[] @relation("ViajeBitacoraCupos")
   incidencias               incidencias[]
   conductores               conductores?     @relation(fields: [conductor_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_viaje_conductor")
