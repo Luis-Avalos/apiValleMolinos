@@ -53,42 +53,57 @@ exports.getSubidasEstadisticas = async (req, res) => {
 exports.getBitacoraAgrupadaPorRuta = async (req, res) => {
   try {
     const bitacoras = await prisma.bitacora_cupos.findMany({
+  select: {
+    id: true,
+    viaje_id: true,
+    ascensos: true,
+    descensos: true,
+    fecha_hora: true,
+    latitud: true,
+    longitud: true,
+    ciudadanosfaltante: true,
+    viajes: {
       select: {
-        id: true,
-        viaje_id: true,
-        ascensos: true,
-        descensos: true,
-        fecha_hora: true,
-        latitud: true,        
-        ciudadanosfaltante: true,        
-        longitud: true,       
-        viajes: {
+        ruta_id: true,
+        rutas: {
           select: {
-            ruta_id: true,
-            rutas: {
-              select: {
-                nombre: true,
-              },
-            },
+            nombre: true,
+          },
+        },
+        unidades: {
+          select: {
+            id: true,
+            numero_economico: true,
+            placas: true,
+            capacidad: true,
+            estado: true,
           },
         },
       },
-      orderBy: { fecha_hora: 'desc' },
-    });
+    },
+  },
+  orderBy: {
+    fecha_hora: "desc",
+  },
+});
 
-    const registros = bitacoras.map(b => ({
-      bitacora_id: b.id,
-      viaje_id: b.viaje_id,
-      ruta_id: b.viajes?.ruta_id || null,
-      nombre_ruta: b.viajes?.rutas?.nombre || 'SIN RUTA',
-      ascensos: b.ascensos,
-      descensos: b.descensos,
-      fecha_hora: b.fecha_hora,
-      latitud: b.latitud,      
-      longitud: b.longitud, 
-      ciudadanosfaltante: b.ciudadanosfaltante,      
-
-    }));
+   const registros = bitacoras.map(b => ({
+  bitacora_id: b.id,
+  viaje_id: b.viaje_id,
+  ruta_id: b.viajes?.ruta_id || null,
+  nombre_ruta: b.viajes?.rutas?.nombre || "SIN RUTA",
+  unidad_id: b.viajes?.unidades?.id || null,
+  numero_economico: b.viajes?.unidades?.numero_economico || null,
+  placas: b.viajes?.unidades?.placas || null,
+  capacidad: b.viajes?.unidades?.capacidad || null,
+  estado_unidad: b.viajes?.unidades?.estado || null,
+  ascensos: b.ascensos,
+  descensos: b.descensos,
+  fecha_hora: b.fecha_hora,
+  latitud: b.latitud,
+  longitud: b.longitud,
+  ciudadanosfaltante: b.ciudadanosfaltante,
+}));
 
     const agrupado = Object.values(
       registros.reduce((acc, r) => {
@@ -99,12 +114,17 @@ exports.getBitacoraAgrupadaPorRuta = async (req, res) => {
         acc[nombre].registros.push({
           bitacora_id: r.bitacora_id,
           viaje_id: r.viaje_id,
+          unidad_id: r.unidad_id,
+          numero_economico: r.numero_economico,
+          placas: r.placas,
+          capacidad: r.capacidad,
+          estado_unidad: r.estado_unidad,
           ascensos: r.ascensos,
           descensos: r.descensos,
           fecha_hora: r.fecha_hora,
-          latitud: r.latitud,       
-          longitud: r.longitud,     
-          ciudadanosfaltante: r.ciudadanosfaltante,     
+          latitud: r.latitud,
+          longitud: r.longitud,
+          ciudadanosfaltante: r.ciudadanosfaltante,
         });
         return acc;
       }, {})

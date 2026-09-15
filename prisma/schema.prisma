@@ -18,8 +18,9 @@ model conductores {
   foto_perfil_url String?
   fecha_registro  DateTime?     @default(now()) @db.Timestamp(6)
   rol             String?       @db.VarChar
+  estatus         Boolean       @default(true)
   incidencias     incidencias[]
-  unidades        unidades[]
+  viajes          viajes[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -33,13 +34,10 @@ model historial_pasajeros {
 }
 
 model notificaciones {
-  id                  Int                  @id @default(autoincrement())
-  usuario_id          Int?
-  titulo              String               @db.VarChar(200)
-  mensaje             String
-  leido               Boolean?             @default(false)
-  fecha               DateTime?            @default(now()) @db.Timestamp(6)
-  usuarios_ciudadanos usuarios_ciudadanos? @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id      Int       @id @default(autoincrement())
+  titulo  String    @db.VarChar(200)
+  mensaje String
+  fecha   DateTime? @default(now()) @db.Timestamp(6)
 }
 
 model rutas {
@@ -59,33 +57,30 @@ model unidades {
   placas           String?       @db.VarChar(20)
   capacidad        Int
   estado           String?       @default("activo") @db.VarChar(20)
-  conductor_id     Int?
   foto_url         String?
   creado_en        DateTime?     @default(now()) @db.Timestamp(6)
   id_geotab        String?       @db.VarChar(50)
   incidencias      incidencias[]
-  conductores      conductores?  @relation(fields: [conductor_id], references: [id], onUpdate: NoAction)
   viajes           viajes[]
 }
 
 model usuarios_ciudadanos {
-  id                  Int              @id @default(autoincrement())
-  nombre              String           @db.VarChar(100)
-  apellido            String           @db.VarChar(100)
-  curp                String           @unique @db.VarChar(18)
-  email               String           @unique @db.VarChar(150)
-  telefono            String?          @unique @db.VarChar(15)
+  id                  Int       @id @default(autoincrement())
+  nombre              String    @db.VarChar(100)
+  apellido            String    @db.VarChar(100)
+  curp                String    @unique @db.VarChar(18)
+  email               String    @unique @db.VarChar(150)
+  telefono            String?   @unique @db.VarChar(15)
   password_hash       String
   foto_perfil_url     String?
-  fecha_registro      DateTime?        @default(now()) @db.Timestamp(6)
-  rol                 String?          @db.VarChar
-  telefono_emergencia String?          @db.VarChar(50)
+  fecha_registro      DateTime? @default(now()) @db.Timestamp(6)
+  rol                 String?   @db.VarChar
+  telefono_emergencia String?   @db.VarChar(50)
   domicilio           String?
-  edad                String?          @db.VarChar
+  edad                String?   @db.VarChar
   carta_anuencia_url  String?
-  updated_at          DateTime?        @default(now()) @db.Timestamp(6)
-  tyc                 Boolean?         @default(true)
-  notificaciones      notificaciones[]
+  updated_at          DateTime? @default(now()) @db.Timestamp(6)
+  tyc                 Boolean?  @default(true)
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -97,14 +92,18 @@ model viajes {
   hora_inicio               DateTime         @db.Time(6)
   hora_fin                  DateTime         @db.Time(6)
   total_vueltas_programadas Int?             @default(1)
-  vueltas_completadas       Int?             @default(0)
+  vueltas_completadas       Float?           @default(0)
   pasajeros_actuales        Int?             @default(0)
   estado                    String?          @default("pendiente") @db.VarChar(20)
   creado_en                 DateTime?        @default(now()) @db.Timestamp(6)
   fechainicioviaje          DateTime?        @db.Timestamptz(6)
   vueltascompletadasmanual  Int?             @default(0)
+  turno                     String?          @db.VarChar
+  conductor_id              Int?
+  promedio                  Int?
   bitacora_cupos            bitacora_cupos[] @relation("ViajeBitacoraCupos")
   incidencias               incidencias[]
+  conductores               conductores?     @relation(fields: [conductor_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_viaje_conductor")
   rutas                     rutas?           @relation(fields: [ruta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   unidades                  unidades?        @relation(fields: [unidad_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   vueltas                   vueltas[]
@@ -248,4 +247,12 @@ model v_estacion {
   fk_estaciones Int? @db.SmallInt
 
   @@ignore
+}
+
+model notificacionesweb {
+  id      Int       @id(map: "notificaciones_pkey_1") @default(autoincrement())
+  titulo  String    @db.VarChar(200)
+  mensaje String
+  fecha   DateTime? @default(now()) @db.Timestamp(6)
+  activo  Boolean   @default(false)
 }

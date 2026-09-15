@@ -4,6 +4,46 @@ const { Pool } = require('pg');
 
 const { DateTime } = require("luxon");
 
+const AWS = require("aws-sdk");
+
+const s3 = new AWS.S3({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  endpoint: new AWS.Endpoint(process.env.AWS_URL),
+  s3ForcePathStyle: true,
+  signatureVersion: "v4",
+  region: "us-east-1"
+});
+
+function generarUrlFirmada(key) {
+
+  if (!key) return null;
+
+  try {
+
+    if (key.startsWith("http")) {
+      const url = new URL(key);
+      key = url.pathname
+        .replace(`/${process.env.AWS_BUCKET}/`, "")
+        .replace(/^\/+/, "");
+    }
+
+    const params = {
+      Bucket: process.env.AWS_BUCKET,
+      Key: key,
+      Expires: 60 * 60 * 4
+    };
+
+    return s3.getSignedUrl("getObject", params);
+
+  } catch (error) {
+
+    console.error("Error generando URL:", error);
+    return null;
+
+  }
+}
+
 function toMexico(date) {
   if (!date) return null;
   return DateTime.fromJSDate(date, { zone: "utc" })
@@ -25,16 +65,37 @@ const pool = new Pool({
    =============================== */
 exports.getViajes = async (req, res) => {
   try {
+
     const viajes = await prisma.viajes.findMany({
       include: {
-        unidades: { include: { conductores: true } },
+        unidades: true,
+        conductores: true,
         rutas: true,
-        bitacora_cupos: true,
+        bitacora_cupos: true
       },
+      orderBy: { id: "desc" },
     });
-    res.json(viajes);
+
+    const viajesConFotos = viajes.map(v => {
+
+      if (v.conductores?.foto_perfil_url) {
+          v.conductores.foto_perfil_url =
+            generarUrlFirmada(
+              v.conductores.foto_perfil_url
+            );
+      }
+      return v;
+    });
+
+    res.json(viajesConFotos);
+
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener viajes', details: error.message });
+
+    res.status(500).json({
+      error: "Error al obtener viajes",
+      details: error.message
+    });
+
   }
 };
 
@@ -49,9 +110,10 @@ exports.getViajeById = async (req, res) => {
     let viaje = await prisma.viajes.findUnique({
       where: { id },
       include: {
-        unidades: { include: { conductores: true } },
-        rutas: true,
-        bitacora_cupos: true,
+        unidades:true,
+        conductores:true,
+        rutas:true,
+        bitacora_cupos:true
       },
     });
 
@@ -62,6 +124,13 @@ exports.getViajeById = async (req, res) => {
       ...viaje,
       fechainicioviaje: toMexico(viaje.fechainicioviaje),
     };
+
+    if (viaje.conductores?.foto_perfil_url) {
+        viaje.conductores.foto_perfil_url =
+          generarUrlFirmada(
+            viaje.conductores.foto_perfil_url
+          );
+      }
 
     res.json(viaje);
   } catch (error) {
@@ -78,6 +147,7 @@ exports.createViaje = async (req, res) => {
       fecha,
       hora_inicio,
       hora_fin,
+      turno,
       unidad_id,
       conductor_id,
       total_vueltas_programadas,
@@ -88,17 +158,18 @@ exports.createViaje = async (req, res) => {
       return res.status(400).json({ error: "Faltan datos necesarios" });
     }
 
-    let conductorAsignadoId = conductor_id ? parseInt(conductor_id) : null;
-
-    // Si no se envía conductor_id, buscar el que tenga la unidad
-    if (!conductorAsignadoId && unidad_id) {
-      const unidad = await prisma.unidades.findUnique({
-        where: { id: parseInt(unidad_id) },
-        select: { conductor_id: true },
-      });
-      if (unidad?.conductor_id) {
-        conductorAsignadoId = unidad.conductor_id;
+    const conflicto = await prisma.viajes.findFirst({
+      where: {
+        unidad_id: unidad_id ? parseInt(unidad_id) : null,
+        fecha: new Date(fecha),
+        turno: turno
       }
+    });
+
+    if (conflicto) {
+      return res.status(400).json({
+        error: "Esta unidad ya tiene un viaje asignado en este turno y fecha"
+      });
     }
 
     // Crear el viaje
@@ -108,25 +179,20 @@ exports.createViaje = async (req, res) => {
         fecha: new Date(fecha),
         hora_inicio: new Date(hora_inicio),
         hora_fin: new Date(hora_fin),
+        turno,
         unidad_id: unidad_id ? parseInt(unidad_id) : null,
+        conductor_id: conductor_id ? parseInt(conductor_id) : null,
         estado: estado || "pendiente",
         total_vueltas_programadas: total_vueltas_programadas
           ? parseInt(total_vueltas_programadas)
           : 1,
       },
       include: {
-        unidades: { include: { conductores: true } },
-        rutas: true,
+        unidades:true,
+        conductores:true,
+        rutas:true
       },
     });
-
-    //  Si hay conductor asignado y unidad, actualizar relación (solo si difiere)
-    if (conductorAsignadoId && unidad_id) {
-      await prisma.unidades.update({
-        where: { id: parseInt(unidad_id) },
-        data: { conductor_id: conductorAsignadoId },
-      });
-    }
 
     res.status(201).json(viaje);
   } catch (error) {
@@ -149,16 +215,22 @@ exports.asignarViaje = async (req, res) => {
       return res.status(400).json({ error: 'Datos inválidos' });
     }
 
-    await prisma.unidades.update({
-      where: { id: unidadId },
-      data: { conductor_id: conductorId },
-    });
+   const viaje = await prisma.viajes.update({
+     where: { 
+        id, 
+      },
 
-    const viaje = await prisma.viajes.update({
-      where: { id },
-      data: { unidad_id: unidadId },
-      include: { unidades: { include: { conductores: true } }, rutas: true },
-    });
+     data: {
+       unidad_id: unidadId,
+       conductor_id: conductorId,
+     },
+
+     include: {
+       unidades: true,
+       conductores: true,
+       rutas: true,
+     },
+   });
 
     res.json(viaje);
   } catch (error) {
@@ -180,7 +252,7 @@ exports.iniciarViaje = async (req, res) => {
         estado: 'en_curso',
         fechainicioviaje: fechaInicio
       },
-      include: { unidades: { include: { conductores: true } }, rutas: true },
+     include:{ unidades:true, conductores:true, rutas:true }
     });
     res.json(viaje);
   } catch (error) {
@@ -199,7 +271,7 @@ exports.finalizarViaje = async (req, res) => {
     const viaje = await prisma.viajes.update({
       where: { id },
       data: { estado: 'finalizado' },
-      include: { unidades: { include: { conductores: true } }, rutas: true },
+     include:{ unidades:true, conductores:true, rutas:true }
     });
 
     res.json(viaje);
@@ -217,8 +289,8 @@ exports.getViajesConductor = async (req, res) => {
     if (isNaN(conductorId)) return res.status(400).json({ error: 'ID conductor inválido' });
 
     const viajes = await prisma.viajes.findMany({
-      where: { unidades: { conductor_id: conductorId } },
-      include: { unidades: { include: { conductores: true } }, rutas: true },
+      where: { conductor_id: conductorId },
+      include:{ unidades:true, conductores:true, rutas:true }
     });
 
     res.json(viajes);
@@ -226,7 +298,6 @@ exports.getViajesConductor = async (req, res) => {
     res.status(500).json({ error: 'Error al obtener viajes', details: error.message });
   }
 };
-
 
 /* ===============================
     ACTUALIZAR VIAJE
@@ -242,6 +313,7 @@ exports.updateViaje = async (req, res) => {
       fecha,
       hora_inicio,
       hora_fin,
+      turno,
       unidad_id,
       conductor_id,
       ruta_id,
@@ -264,6 +336,7 @@ exports.updateViaje = async (req, res) => {
     if (fecha) dataToUpdate.fecha = new Date(fecha);
     if (hora_inicio) dataToUpdate.hora_inicio = new Date(hora_inicio);
     if (hora_fin) dataToUpdate.hora_fin = new Date(hora_fin);
+    if (turno) dataToUpdate.turno = turno;
     if (estado) dataToUpdate.estado = estado;
 
     const nuevosPasajeros =
@@ -275,26 +348,15 @@ exports.updateViaje = async (req, res) => {
       dataToUpdate.pasajeros_actuales = nuevosPasajeros;
     }
 
-    if (unidad_id) dataToUpdate.unidad_id = parseInt(unidad_id);
+    if (unidad_id !== undefined && unidad_id !== null) { dataToUpdate.unidad_id = parseInt(unidad_id); }
     if (ruta_id) dataToUpdate.ruta_id = parseInt(ruta_id);
-
-    // Actualiza conductor si se envía
-    if (conductor_id && unidad_id) {
-      await prisma.unidades.update({
-        where: { id: parseInt(unidad_id) },
-        data: { conductor_id: parseInt(conductor_id) },
-      });
-    }
-
+    if (conductor_id !== undefined && conductor_id !== null) { dataToUpdate.conductor_id = parseInt(conductor_id); }
+    
     //  Actualiza viaje con Prisma
     const viaje = await prisma.viajes.update({
       where: { id },
       data: dataToUpdate,
-      include: {
-        unidades: { include: { conductores: true } },
-        rutas: true,
-        bitacora_cupos: true,
-      },
+      include:{ unidades:true, conductores:true, rutas:true, bitacora_cupos:true },
     });
 
     //  Registra en bitácora con SQL nativo (evita ST_MakePoint de Prisma)
@@ -353,5 +415,64 @@ exports.getSubidas = async (req, res) => {
     res.json(bitacoracupos);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener bitácora', details: error.message });
+  }
+};
+
+/* ===============================
+   OBTENER VIAJES HASTA UNA FECHA
+   =============================== */
+exports.getViajesHastaFecha = async (req, res) => {
+  try {
+
+    const { fecha } = req.query;
+
+    if (!fecha) {
+      return res.status(400).json({
+        error: "Debe enviar una fecha. Ejemplo: ?fecha=2026-05-25"
+      });
+    }
+
+    const query = `
+      SELECT
+        b.id,
+        c.numero_economico,
+        d.nombre,
+        b.fecha,
+        b.hora_inicio,
+        b.hora_fin,
+        b.total_vueltas_programadas,
+        b.vueltas_completadas,
+        b.pasajeros_actuales,
+        b.creado_en,
+        b.fechainicioviaje,
+        b.vueltascompletadasmanual
+      FROM vallemolinostest.viajes AS b
+      LEFT JOIN vallemolinostest.unidades AS c
+        ON b.unidad_id = c.id
+      LEFT JOIN vallemolinostest.rutas AS d
+        ON b.ruta_id = d.id
+      WHERE b.fecha <= $1
+      ORDER BY b.fecha DESC
+    `;
+
+    const result = await pool.query(query, [fecha]);
+
+    const viajes = result.rows.map(viaje => ({
+      ...viaje,
+      fechainicioviaje: toMexico(viaje.fechainicioviaje),
+      creado_en: toMexico(viaje.creado_en)
+    }));
+
+    res.json(viajes);
+
+  } catch (error) {
+
+    console.error("Error obteniendo viajes:", error);
+
+    res.status(500).json({
+      error: "Error al obtener viajes",
+      details: error.message
+    });
+
   }
 };

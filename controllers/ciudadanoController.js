@@ -16,6 +16,8 @@ const s3 = new AWS.S3({
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   endpoint: new AWS.Endpoint(process.env.AWS_URL),
   s3ForcePathStyle: true,
+  signatureVersion: "v4",
+  region: "us-east-1"
 });
 
 // Función  para subir a S3
@@ -27,21 +29,45 @@ async function subirAS3(file, email) {
     Key: key,
     Body: file.buffer,
     ContentType: file.mimetype,
-    ACL: 'public-read',
   };
 
-  const result = await s3.upload(params).promise();
-
-  // URL final accesible públicamente
-  return `${process.env.AWS_URL}/${process.env.AWS_BUCKET}/${key}`;
+  await s3.upload(params).promise();
+  return key; 
 }
 
+function generarUrlFirmada(key) {
+
+  if (key.startsWith("http")) {
+    const url = new URL(key);
+    key = url.pathname.replace(`/${process.env.AWS_BUCKET}/`, "");
+  }
+
+  const params = {
+    Bucket: process.env.AWS_BUCKET,
+    Key: key,
+    Expires: 60 * 60 * 4
+  };
+
+  return s3.getSignedUrl("getObject", params);
+}
 
 // --- Obtener todos los ciudadanos
 exports.getAllCiudadanos = async (req, res) => {
   try {
-    const ciudadanos = await prisma.usuarios_ciudadanos.findMany();
-    res.json(ciudadanos);
+const ciudadanos = await prisma.usuarios_ciudadanos.findMany();
+
+const ciudadanosConUrl = ciudadanos.map(c => ({
+  ...c,
+  foto_perfil_url: c.foto_perfil_url
+    ? generarUrlFirmada(c.foto_perfil_url)
+    : null,
+  carta_anuencia_url: c.carta_anuencia_url
+    ? generarUrlFirmada(c.carta_anuencia_url)
+    : null
+}));
+
+res.json(ciudadanosConUrl);
+
   } catch (error) {
     console.error('Error en getAllCiudadanos:', error);
     res.status(500).json({ error: 'Error al obtener ciudadanos', details: error.message });
@@ -52,16 +78,51 @@ exports.getAllCiudadanos = async (req, res) => {
 exports.getCiudadanoById = async (req, res) => {
   try {
     const ciudadano = await prisma.usuarios_ciudadanos.findUnique({
-      where: { id: Number(req.params.id) },
-    });
-    if (!ciudadano) return res.status(404).json({ error: 'Ciudadano no encontrado' });
-    res.json(ciudadano);
+  where: { id: Number(req.params.id) },
+});
+
+if (!ciudadano) return res.status(404).json({ error: 'Ciudadano no encontrado' });
+
+const ciudadanoConUrl = {
+  ...ciudadano,
+  foto_perfil_url: ciudadano.foto_perfil_url
+    ? generarUrlFirmada(ciudadano.foto_perfil_url)
+    : null,
+  carta_anuencia_url: ciudadano.carta_anuencia_url
+    ? generarUrlFirmada(ciudadano.carta_anuencia_url)
+    : null
+};
+
+res.json(ciudadanoConUrl);
+
   } catch (error) {
     console.error('Error en getCiudadanoById:', error);
     res.status(500).json({ error: 'Error al obtener ciudadano', details: error.message });
   }
 };
 
+function isValidPassword(password, user) {
+  const { nombre, apellido, curp } = user;
+  const pass = password.toLowerCase();
+
+  if (password.length < 8) return false;
+  if (!/[A-Z]/.test(password)) return false;
+  if (!/[a-z]/.test(password)) return false;
+  if (!/[0-9]/.test(password)) return false;
+
+  if (nombre && pass.includes(nombre.toLowerCase())) return false;
+  if (apellido && pass.includes(apellido.toLowerCase())) return false;
+
+  if (curp) {
+    const fecha = curp.slice(4, 10);
+    if (pass.includes(fecha)) return false;
+  }
+
+  const secuencias = ["1234", "2345", "3456", "4567", "5678", "6789"];
+  if (secuencias.some(seq => pass.includes(seq))) return false;
+
+  return true;
+}
 
 exports.createCiudadano = [
   upload.any(),
@@ -89,8 +150,12 @@ exports.createCiudadano = [
         console.error(" No se la contraseña en el body");
         return res.status(400).json({ error: "La contraseña es requerida" });
       }
-       const plainPassword = password;
-
+      
+if (!isValidPassword(password, { nombre, apellido, curp })) {
+  return res.status(400).json({
+    error: "La contraseña no cumple con los requisitos de seguridad"
+  });
+}
 
       const hashed = await bcrypt.hash(password, 10);
 
@@ -141,8 +206,7 @@ exports.createCiudadano = [
             domicilio,
             edad,
             fotoUrl,
-            cartaUrl,
-            plainPassword
+            cartaUrl
           );
 
         console.log(` Correo enviado a ${email}`);
@@ -162,7 +226,6 @@ exports.createCiudadano = [
     }
   }
 ];
-
 
 // --- Actualizar ciudadano
 exports.updateCiudadano = [
@@ -195,7 +258,15 @@ exports.updateCiudadano = [
       if (telefono_emergencia) dataToUpdate.telefono_emergencia = telefono_emergencia;
       if (domicilio) dataToUpdate.domicilio = domicilio;
       if (edad) dataToUpdate.edad = parseInt(edad);
-      if (password) dataToUpdate.password_hash = await bcrypt.hash(password, 10);
+      if (password) {
+      if (!isValidPassword(password, ciudadano)) {
+        return res.status(400).json({
+          error: "La contraseña no cumple con los requisitos"
+        });
+      }
+
+  dataToUpdate.password_hash = await bcrypt.hash(password, 10);
+}
 
       // Archivos (foto y carta)
       if (req.files && req.files.length > 0) {
@@ -257,4 +328,4 @@ exports.deleteCiudadano = async (req, res) => {
     console.error('Error en deleteCiudadano:', error);
     res.status(500).json({ error: 'Error al eliminar ciudadano', details: error.message });
   }
-};
+};  

@@ -52,10 +52,10 @@ const getIncidencias = async (req, res) => {
         c.email AS email_conductor,
         c.telefono AS telefono_conductor,
         c.curp AS curp_conductor,
-        c.foto_perfil_url AS foto_conductor,
+        CONCAT('https://s3.zapopan.gob.mx/geomatica/', c.foto_perfil_url) AS foto_conductor,
         u.numero_economico AS numero_unidad,
         u.placas AS placas_unidad,
-        u.foto_url AS foto_unidad,
+        CONCAT('https://s3.zapopan.gob.mx/geomatica/', u.foto_url) AS foto_unidad,
         v.hora_inicio,
         v.hora_fin,
         v.estado AS estado_viaje

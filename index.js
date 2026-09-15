@@ -55,9 +55,8 @@ app.use('/api/incidencias', incidenciasRoutes);
 app.use('/api/dashboard', dashboard);
 app.use('/api/notificaciones', require('./routes/notificacionesRoutes'));
 
-// ==========================================
 // Rutas de prueba
-// ==========================================
+
 app.get('/api/ping', (req, res) => {
   res.json({
     status: 'ok',
