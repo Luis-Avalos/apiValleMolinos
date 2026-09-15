@@ -39,6 +39,8 @@ const vueltasRoutes = require('./routes/vueltasRoutes');
 const geotabRoutes = require('./routes/gpsEnvivo');
 const incidenciasRoutes = require('./routes/incidenciasRoutes');
 const dashboard = require('./routes/dashboard');
+const promedio = require('./routes/promedioRoutes');
+const RegistroRutas = require('./routes/RegistroVueltasRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api', passwordResetRoutes);
@@ -54,6 +56,9 @@ app.use('/api', geotabRoutes);
 app.use('/api/incidencias', incidenciasRoutes);
 app.use('/api/dashboard', dashboard);
 app.use('/api/notificaciones', require('./routes/notificacionesRoutes'));
+
+app.use('/api/promedio', promedio);
+app.use('/api/registrorutas', RegistroRutas);
 
 // Rutas de prueba
 
